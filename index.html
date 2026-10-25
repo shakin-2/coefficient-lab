@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="化学反応式の係数を△▽ボタンで合わせる練習ゲーム（高校化学）">
+<title>係数ラボ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: 実験ノート（方眼紙）の上に反応式カードを並べ、下に原子の収支表。スマホ縦一列 → 広い画面で2カラム */
+:root {
+  --paper: #F3F6F7;
+  --grid: #DCE5E8;
+  --card: #FFFFFF;
+  --ink: #18283A;
+  --muted: #5E7183;
+  --line: #C6D3DA;
+  --accent: #0B7A84;
+  --accent-ink: #FFFFFF;
+  --good: #1C7C3C;
+  --good-bg: #E2F3E7;
+  --bad: #B4421A;
+  --bad-bg: #FBE9E1;
+  --display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F161C; --grid: #18232C; --card: #16212A; --ink: #E2EAF0; --muted: #91A3B2;
+    --line: #2A3A47; --accent: #4CC0C9; --accent-ink: #062126; --good: #6FD08F; --good-bg: #173326;
+    --bad: #F08A63; --bad-bg: #3A2017; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F161C; --grid: #18232C; --card: #16212A; --ink: #E2EAF0; --muted: #91A3B2;
+  --line: #2A3A47; --accent: #4CC0C9; --accent-ink: #062126; --good: #6FD08F; --good-bg: #173326;
+  --bad: #F08A63; --bad-bg: #3A2017; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 18px;
+}
+button { font-family: inherit; color: inherit; touch-action: manipulation; }
+button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* screens */
+.screen { display: grid; gap: 18px; }
+.screen[hidden] { display: none; }
+.home { max-width: 640px; margin: 0 auto; width: 100%; }
+.hero h1 { font-size: 2.6rem; }
+.hero p { margin: 10px 0 0; color: var(--muted); }
+.hero .sample { margin-top: 14px; font-size: 1.3rem; font-weight: 700; letter-spacing: .02em; }
+.hero .sample .c { font-family: var(--display); color: var(--accent); font-weight: 400; }
+.hero .sample sub { font-size: .62em; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { float: left; width: 100%; font-size: .8rem; letter-spacing: .12em; color: var(--muted); font-weight: 700; margin-bottom: 10px; padding: 0; }
+legend + * { clear: both; }
+.choices { display: grid; gap: 10px; }
+.choices.lv { grid-template-columns: 1fr; }
+@media (min-width: 560px) { .choices.lv { grid-template-columns: repeat(3, 1fr); } }
+.choices.cnt { grid-template-columns: repeat(3, 1fr); }
+.choice {
+  text-align: left; border: 1.5px solid var(--line); background: var(--card); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  display: grid; gap: 4px; transition: border-color .15s, background .15s;
+}
+.choice b { font-size: 1.1rem; }
+.choice span { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+.choice .best { font-family: var(--mono); font-size: .72rem; }
+.choices.cnt .choice { text-align: center; }
+.choice[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+.choice[aria-pressed="true"] b { color: var(--accent); }
+.ion-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; cursor: pointer; }
+.ion-opt input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
+.ion-opt b { font-size: 1rem; }
+.ion-opt span { grid-column: 2; font-size: .8rem; color: var(--muted); line-height: 1.5; }
+.formula sup { font-size: .6em; vertical-align: .55em; line-height: 0; margin-left: 1px; }
+.hero .sample sup { font-size: .6em; }
+tr.charge td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.start { font-size: 1.05rem; padding: 14px; border-radius: 12px; width: 100%; }
+.settings-note { font-size: .85rem; color: var(--muted); }
+
+/* result */
+.result { max-width: 640px; margin: 0 auto; width: 100%; }
+.result .big { font-family: var(--display); font-size: 3rem; line-height: 1; }
+.result .big small { font-family: var(--mono); font-size: 1rem; color: var(--muted); }
+.result ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.result li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.result li .nm { min-width: 0; }
+.result li .st { font-family: var(--mono); white-space: nowrap; color: var(--accent); }
+.result li .st.skip { color: var(--bad); font-family: var(--body); font-size: .85rem; font-weight: 700; }
+
+/* header */
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 1.9rem; line-height: 1.1; margin: 0; letter-spacing: .02em; }
+h1 small { display: block; font-family: var(--body); font-size: .8rem; color: var(--muted); letter-spacing: .08em; margin-top: 6px; font-weight: 700; }
+.levels { display: flex; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+.levels button {
+  border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: .9rem; cursor: pointer; color: var(--muted);
+}
+.levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* progress strip */
+.progress { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dot {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--card);
+  font-family: var(--mono); font-size: .72rem; display: grid; place-items: center; color: var(--muted);
+}
+.dot.done { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+.dot.shown { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+.dot.current { outline: 2px solid var(--ink); outline-offset: 1px; color: var(--ink); }
+.score { margin-left: auto; font-family: var(--mono); font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.score b { color: var(--ink); }
+
+/* main board */
+.board {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 18px 16px 20px; display: grid; gap: 16px;
+}
+.qhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.qno { font-family: var(--mono); font-size: .8rem; color: var(--muted); letter-spacing: .06em; }
+.qname { font-weight: 700; font-size: 1rem; }
+.taps { font-family: var(--mono); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.equation { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 8px; }
+.side { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 6px; }
+.op { font-family: var(--display); font-size: 1.4rem; color: var(--muted); padding: 0 2px; }
+.arrow { font-size: 1.8rem; color: var(--ink); padding: 0 6px; }
+
+.term {
+  display: flex; align-items: center; gap: 4px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px 4px 4px; background: var(--paper);
+  transition: border-color .2s, background .2s;
+}
+.term:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.stepper { display: grid; grid-template-rows: auto auto auto; justify-items: center; }
+.stepper button {
+  width: 44px; height: 32px; border: 0; background: transparent; cursor: pointer; font-size: 1rem; color: var(--accent);
+  border-radius: 8px; user-select: none; -webkit-user-select: none;
+}
+.stepper button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.stepper button:active { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.stepper button:disabled { color: var(--line); cursor: default; background: transparent; }
+.coef {
+  font-family: var(--display); font-size: 1.7rem; line-height: 1; min-width: 1.6ch; text-align: center;
+  font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.coef.one { color: var(--muted); opacity: .45; }
+.coef.bump { animation: bump .18s ease-out; }
+@keyframes bump { from { transform: scale(1.25); } to { transform: scale(1); } }
+.formula { font-size: 1.45rem; font-weight: 700; white-space: nowrap; letter-spacing: .01em; }
+.formula sub { font-size: .62em; vertical-align: -0.35em; line-height: 0; }
+
+.status {
+  min-height: 2.6em; display: flex; align-items: center; justify-content: center; text-align: center;
+  font-weight: 700; border-radius: 10px; padding: 8px 12px; background: var(--paper); color: var(--muted);
+}
+.status.ok { background: var(--good-bg); color: var(--good); }
+.status.warn { background: var(--bad-bg); color: var(--bad); }
+.stars { letter-spacing: .15em; margin-left: 8px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.btn {
+  border: 1px solid var(--line); background: var(--card); padding: 9px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: .9rem;
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+/* atom ledger */
+.grid2 { display: grid; gap: 18px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .grid2 { grid-template-columns: 1.1fr .9fr; } }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.panel h2 { font-size: .8rem; letter-spacing: .12em; color: var(--muted); margin: 0 0 10px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.switch { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; letter-spacing: 0; cursor: pointer; color: var(--ink); }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: center; padding: 7px 4px; border-bottom: 1px solid var(--line); }
+th { font-size: .75rem; color: var(--muted); font-weight: 700; letter-spacing: .06em; }
+td.el { font-weight: 700; font-size: 1.05rem; text-align: left; padding-left: 8px; }
+td.n { font-family: var(--mono); font-size: 1.05rem; }
+.pill { display: inline-block; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.pill.ok { background: var(--good-bg); color: var(--good); }
+.pill.ng { background: var(--bad-bg); color: var(--bad); }
+.hidden-note { color: var(--muted); font-size: .9rem; padding: 10px 0; }
+.howto ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.howto li::marker { font-family: var(--mono); color: var(--accent); }
+.howto p { margin: 10px 0 0; color: var(--muted); font-size: .85rem; }
+kbd { font-family: var(--mono); font-size: .8em; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; background: var(--paper); }
+
+@media (max-width: 420px) {
+  .formula { font-size: 1.25rem; }
+  .coef { font-size: 1.5rem; }
+  .stepper button { width: 40px; height: 30px; }
+}
+@media (prefers-reduced-motion: reduce) { .coef.bump { animation: none; } * { transition: none !important; } }
+</style>
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- スタート画面 -->
+  <section class="screen home" id="screen-home">
+    <div class="hero">
+      <h1>係数ラボ<small>化学反応式の係数を △▽ で合わせよう</small></h1>
+      <div class="sample" aria-hidden="true"><span class="c">2</span>H<sub>2</sub> + O<sub>2</sub> ⟶ <span class="c">2</span>H<sub>2</sub>O</div>
+    </div>
+
+    <fieldset class="panel">
+      <legend>難易度</legend>
+      <div class="choices lv" id="pick-lv">
+        <button type="button" class="choice" id="pick-lv-0" data-lv="0"><b>初級</b><span>燃焼・中和・金属と酸など、物質が2〜4個の式</span><span class="best" data-best="0"></span></button>
+        <button type="button" class="choice" id="pick-lv-1" data-lv="1"><b>中級</b><span>炭化水素の燃焼、両性金属、気体の発生など</span><span class="best" data-best="1"></span></button>
+        <button type="button" class="choice" id="pick-lv-2" data-lv="2"><b>上級</b><span>酸化還元反応、工業的製法、滴定の反応</span><span class="best" data-best="2"></span></button>
+      </div>
+    </fieldset>
+
+    <fieldset class="panel">
+      <legend>問題数</legend>
+      <div class="choices cnt" id="pick-cnt">
+        <button type="button" class="choice" id="pick-cnt-5" data-cnt="5"><b>5問</b></button>
+        <button type="button" class="choice" id="pick-cnt-10" data-cnt="10"><b>10問</b></button>
+        <button type="button" class="choice" id="pick-cnt-20" data-cnt="20"><b>20問</b></button>
+      </div>
+    </fieldset>
+
+    <fieldset class="panel">
+      <legend>オプション</legend>
+      <label class="ion-opt" for="ion-toggle">
+        <input type="checkbox" id="ion-toggle">
+        <b>イオン反応式を含める</b>
+        <span>原子の数に加えて、両辺の電荷の合計もそろえる問題が混ざります。上級には電子 e<sup>−</sup> を含む半反応式も出ます。</span>
+      </label>
+    </fieldset>
+
+    <button type="button" class="btn primary start" id="btn-start">スタート</button>
+    <div class="settings-note" id="pool-note"></div>
+  </section>
+
+  <!-- ゲーム画面 -->
+  <section class="screen" id="screen-game" hidden>
+    <header>
+      <h1>係数ラボ<small id="session-label"></small></h1>
+      <button type="button" class="btn" id="btn-menu">← 最初の画面へ</button>
+    </header>
+
+    <div class="progress" id="progress" aria-label="進み具合"></div>
+
+    <section class="board" aria-live="polite">
+      <div class="qhead">
+        <div><div class="qno" id="qno"></div><div class="qname" id="qname"></div></div>
+        <div class="taps" id="taps"></div>
+      </div>
+      <div class="equation" id="equation"></div>
+      <div class="status" id="status"></div>
+      <div class="actions">
+        <button type="button" class="btn" id="btn-reset">すべて 1 に戻す</button>
+        <button type="button" class="btn" id="btn-answer">答えを見る</button>
+        <button type="button" class="btn primary" id="btn-next">次の問題 →</button>
+      </div>
+    </section>
+
+    <div class="grid2">
+      <section class="panel">
+        <h2>原子の数（左辺 ⇄ 右辺）
+          <label class="switch"><input type="checkbox" id="hint-toggle" checked> 表示する</label>
+        </h2>
+        <div id="ledger"></div>
+      </section>
+      <section class="panel howto">
+        <h2>あそびかた</h2>
+        <ol>
+          <li>各物質の △ で係数を増やし、▽ で減らします（1〜20）。長押しで連続変化。</li>
+          <li>左辺と右辺で、すべての原子の数がそろえば正解です。イオン反応式では電荷の合計もそろえます。</li>
+          <li>係数は最も簡単な整数比に。4,2,4 ではなく 2,1,2 にします。</li>
+          <li>少ないタップで解くほど ★ が増えます。</li>
+        </ol>
+        <p>キーボード：物質を選んで <kbd>↑</kbd><kbd>↓</kbd>、<kbd>←</kbd><kbd>→</kbd> で移動。係数 1 は式では省略されるため薄く表示しています。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- 結果画面 -->
+  <section class="screen result" id="screen-result" hidden>
+    <div class="hero">
+      <h1>結果<small id="result-label"></small></h1>
+    </div>
+    <div class="panel">
+      <div class="big" id="result-score"></div>
+      <p id="result-msg"></p>
+    </div>
+    <div class="panel">
+      <h2>問題ごとの成績</h2>
+      <ul id="result-list"></ul>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="btn-home">最初の画面へ</button>
+      <button type="button" class="btn primary" id="btn-again">同じ設定でもう一度</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const P = (name, L, R, a) => ({ name, L, R, a });
+const PROBLEMS = [
+  [ // 初級
+    P("水素の燃焼", ["H2", "O2"], ["H2O"], [2, 1, 2]),
+    P("水の電気分解", ["H2O"], ["H2", "O2"], [2, 2, 1]),
+    P("アンモニアの合成（ハーバー・ボッシュ法）", ["N2", "H2"], ["NH3"], [1, 3, 2]),
+    P("塩化水素の生成", ["H2", "Cl2"], ["HCl"], [1, 1, 2]),
+    P("マグネシウムの燃焼", ["Mg", "O2"], ["MgO"], [2, 1, 2]),
+    P("銅の酸化", ["Cu", "O2"], ["CuO"], [2, 1, 2]),
+    P("ナトリウムの酸化", ["Na", "O2"], ["Na2O"], [4, 1, 2]),
+    P("鉄の燃焼", ["Fe", "O2"], ["Fe3O4"], [3, 2, 1]),
+    P("塩化ナトリウムの生成", ["Na", "Cl2"], ["NaCl"], [2, 1, 2]),
+    P("一酸化炭素の燃焼", ["CO", "O2"], ["CO2"], [2, 1, 2]),
+    P("一酸化窒素の酸化", ["NO", "O2"], ["NO2"], [2, 1, 2]),
+    P("二酸化硫黄の酸化（接触法）", ["SO2", "O2"], ["SO3"], [2, 1, 2]),
+    P("メタンの燃焼", ["CH4", "O2"], ["CO2", "H2O"], [1, 2, 1, 2]),
+    P("エチレンの燃焼", ["C2H4", "O2"], ["CO2", "H2O"], [1, 3, 2, 2]),
+    P("過酸化水素の分解", ["H2O2"], ["H2O", "O2"], [2, 2, 1]),
+    P("塩素酸カリウムの分解", ["KClO3"], ["KCl", "O2"], [2, 2, 3]),
+    P("酸化銀の熱分解", ["Ag2O"], ["Ag", "O2"], [2, 4, 1]),
+    P("酸化銅(II)の炭素による還元", ["CuO", "C"], ["Cu", "CO2"], [2, 1, 2, 1]),
+    P("ナトリウムと水", ["Na", "H2O"], ["NaOH", "H2"], [2, 2, 2, 1]),
+    P("カルシウムと水", ["Ca", "H2O"], ["Ca(OH)2", "H2"], [1, 2, 1, 1]),
+    P("マグネシウムと塩酸", ["Mg", "HCl"], ["MgCl2", "H2"], [1, 2, 1, 1]),
+    P("鉄と塩酸", ["Fe", "HCl"], ["FeCl2", "H2"], [1, 2, 1, 1]),
+    P("硫酸と水酸化ナトリウムの中和", ["H2SO4", "NaOH"], ["Na2SO4", "H2O"], [1, 2, 1, 2]),
+    P("塩酸と水酸化カルシウムの中和", ["HCl", "Ca(OH)2"], ["CaCl2", "H2O"], [2, 1, 1, 2]),
+    P("水酸化ナトリウムと二酸化炭素", ["NaOH", "CO2"], ["Na2CO3", "H2O"], [2, 1, 1, 1]),
+  ],
+  [ // 中級
+    P("プロパンの燃焼", ["C3H8", "O2"], ["CO2", "H2O"], [1, 5, 3, 4]),
+    P("エタンの燃焼", ["C2H6", "O2"], ["CO2", "H2O"], [2, 7, 4, 6]),
+    P("ブタンの燃焼", ["C4H10", "O2"], ["CO2", "H2O"], [2, 13, 8, 10]),
+    P("アセチレンの燃焼", ["C2H2", "O2"], ["CO2", "H2O"], [2, 5, 4, 2]),
+    P("メタノールの燃焼", ["CH3OH", "O2"], ["CO2", "H2O"], [2, 3, 2, 4]),
+    P("エタノールの燃焼", ["C2H5OH", "O2"], ["CO2", "H2O"], [1, 3, 2, 3]),
+    P("アルミニウムの酸化", ["Al", "O2"], ["Al2O3"], [4, 3, 2]),
+    P("鉄の酸化（赤さび）", ["Fe", "O2"], ["Fe2O3"], [4, 3, 2]),
+    P("黄リンの燃焼", ["P4", "O2"], ["P4O10"], [1, 5, 1]),
+    P("硫化水素の燃焼", ["H2S", "O2"], ["SO2", "H2O"], [2, 3, 2, 2]),
+    P("マグネシウムと二酸化炭素", ["Mg", "CO2"], ["MgO", "C"], [2, 1, 2, 1]),
+    P("亜鉛と塩酸", ["Zn", "HCl"], ["ZnCl2", "H2"], [1, 2, 1, 1]),
+    P("アルミニウムと塩酸", ["Al", "HCl"], ["AlCl3", "H2"], [2, 6, 2, 3]),
+    P("アルミニウムと希硫酸", ["Al", "H2SO4"], ["Al2(SO4)3", "H2"], [2, 3, 1, 3]),
+    P("アルミニウムと水酸化ナトリウム水溶液", ["Al", "NaOH", "H2O"], ["Na[Al(OH)4]", "H2"], [2, 2, 6, 2, 3]),
+    P("酸化アルミニウムと塩酸", ["Al2O3", "HCl"], ["AlCl3", "H2O"], [1, 6, 2, 3]),
+    P("酸化アルミニウムと水酸化ナトリウム水溶液", ["Al2O3", "NaOH", "H2O"], ["Na[Al(OH)4]"], [1, 2, 3, 2]),
+    P("酸化ナトリウムと水", ["Na2O", "H2O"], ["NaOH"], [1, 1, 2]),
+    P("炭酸水素ナトリウムの熱分解", ["NaHCO3"], ["Na2CO3", "H2O", "CO2"], [2, 1, 1, 1]),
+    P("石灰石と塩酸", ["CaCO3", "HCl"], ["CaCl2", "H2O", "CO2"], [1, 2, 1, 1, 1]),
+    P("炭酸ナトリウムと塩酸", ["Na2CO3", "HCl"], ["NaCl", "H2O", "CO2"], [1, 2, 2, 1, 1]),
+    P("アンモニアの発生（塩化アンモニウムと水酸化カルシウム）", ["NH4Cl", "Ca(OH)2"], ["CaCl2", "NH3", "H2O"], [2, 1, 1, 2, 2]),
+    P("アンモニアと硫酸", ["NH3", "H2SO4"], ["(NH4)2SO4"], [2, 1, 1]),
+    P("炭化カルシウムと水（アセチレンの発生）", ["CaC2", "H2O"], ["Ca(OH)2", "C2H2"], [1, 2, 1, 1]),
+    P("酸化鉄(III)の還元（溶鉱炉）", ["Fe2O3", "CO"], ["Fe", "CO2"], [1, 3, 2, 3]),
+    P("四酸化三鉄の還元", ["Fe3O4", "CO"], ["Fe", "CO2"], [1, 4, 3, 4]),
+    P("二酸化ケイ素と水酸化ナトリウム", ["SiO2", "NaOH"], ["Na2SiO3", "H2O"], [1, 2, 1, 1]),
+  ],
+  [ // 上級
+    P("アンモニアの酸化（オストワルト法）", ["NH3", "O2"], ["NO", "H2O"], [4, 5, 4, 6]),
+    P("二酸化窒素と水（オストワルト法）", ["NO2", "H2O"], ["HNO3", "NO"], [3, 1, 2, 1]),
+    P("グルコースの燃焼", ["C6H12O6", "O2"], ["CO2", "H2O"], [1, 6, 6, 6]),
+    P("スクロースの燃焼", ["C12H22O11", "O2"], ["CO2", "H2O"], [1, 12, 12, 11]),
+    P("ベンゼンの燃焼", ["C6H6", "O2"], ["CO2", "H2O"], [2, 15, 12, 6]),
+    P("黄鉄鉱の燃焼", ["FeS2", "O2"], ["Fe2O3", "SO2"], [4, 11, 2, 8]),
+    P("テルミット反応", ["Fe2O3", "Al"], ["Al2O3", "Fe"], [1, 2, 1, 2]),
+    P("酸化マンガン(IV)と濃塩酸", ["MnO2", "HCl"], ["MnCl2", "Cl2", "H2O"], [1, 4, 1, 1, 2]),
+    P("さらし粉と塩酸", ["Ca(ClO)2", "HCl"], ["CaCl2", "Cl2", "H2O"], [1, 4, 1, 2, 2]),
+    P("塩素と水酸化ナトリウム", ["Cl2", "NaOH"], ["NaCl", "NaClO", "H2O"], [1, 2, 1, 1, 1]),
+    P("銅と希硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO", "H2O"], [3, 8, 3, 2, 4]),
+    P("銅と濃硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO2", "H2O"], [1, 4, 1, 2, 2]),
+    P("銀と希硝酸", ["Ag", "HNO3"], ["AgNO3", "NO", "H2O"], [3, 4, 3, 1, 2]),
+    P("銀と濃硝酸", ["Ag", "HNO3"], ["AgNO3", "NO2", "H2O"], [1, 2, 1, 1, 1]),
+    P("銅と熱濃硫酸", ["Cu", "H2SO4"], ["CuSO4", "SO2", "H2O"], [1, 2, 1, 1, 2]),
+    P("二酸化硫黄と硫化水素", ["SO2", "H2S"], ["S", "H2O"], [1, 2, 3, 2]),
+    P("過マンガン酸カリウムと塩酸", ["KMnO4", "HCl"], ["KCl", "MnCl2", "H2O", "Cl2"], [2, 16, 2, 2, 8, 5]),
+    P("過マンガン酸カリウムと硫酸鉄(II)", ["KMnO4", "FeSO4", "H2SO4"], ["K2SO4", "MnSO4", "Fe2(SO4)3", "H2O"], [2, 10, 8, 1, 2, 5, 8]),
+    P("過マンガン酸カリウムとシュウ酸", ["KMnO4", "(COOH)2", "H2SO4"], ["K2SO4", "MnSO4", "CO2", "H2O"], [2, 5, 3, 1, 2, 10, 8]),
+    P("過マンガン酸カリウムと二酸化硫黄", ["KMnO4", "SO2", "H2O"], ["K2SO4", "MnSO4", "H2SO4"], [2, 5, 2, 1, 2, 2]),
+    P("二クロム酸カリウムと硫酸鉄(II)", ["K2Cr2O7", "FeSO4", "H2SO4"], ["K2SO4", "Cr2(SO4)3", "Fe2(SO4)3", "H2O"], [1, 6, 7, 1, 1, 3, 7]),
+    P("ヨウ化カリウムと過酸化水素", ["KI", "H2O2", "H2SO4"], ["K2SO4", "I2", "H2O"], [2, 1, 1, 1, 1, 2]),
+    P("チオ硫酸ナトリウムとヨウ素（ヨウ素滴定）", ["Na2S2O3", "I2"], ["Na2S4O6", "NaI"], [2, 1, 1, 2]),
+    P("リン酸カルシウムと硫酸", ["Ca3(PO4)2", "H2SO4"], ["CaSO4", "H3PO4"], [1, 3, 3, 2]),
+    P("二酸化ケイ素とフッ化水素酸", ["SiO2", "HF"], ["H2SiF6", "H2O"], [1, 6, 1, 2]),
+  ],
+];
+const I = (name, L, R, a) => ({ name, L, R, a, ion: true });
+const ION_PROBLEMS = [
+  [ // 初級
+    I("亜鉛と酸（イオン反応式）", ["Zn", "H^+"], ["Zn^2+", "H2"], [1, 2, 1, 1]),
+    I("マグネシウムと酸（イオン反応式）", ["Mg", "H^+"], ["Mg^2+", "H2"], [1, 2, 1, 1]),
+    I("鉄と酸（イオン反応式）", ["Fe", "H^+"], ["Fe^2+", "H2"], [1, 2, 1, 1]),
+    I("銅と銀イオン（金属のイオン化傾向）", ["Cu", "Ag^+"], ["Cu^2+", "Ag"], [1, 2, 1, 2]),
+    I("ナトリウムと水（イオン反応式）", ["Na", "H2O"], ["Na^+", "OH^-", "H2"], [2, 2, 2, 2, 1]),
+    I("水酸化銅(II)の沈殿", ["Cu^2+", "OH^-"], ["Cu(OH)2"], [1, 2, 1]),
+    I("水酸化鉄(III)の沈殿", ["Fe^3+", "OH^-"], ["Fe(OH)3"], [1, 3, 1]),
+    I("水酸化アルミニウムの沈殿", ["Al^3+", "OH^-"], ["Al(OH)3"], [1, 3, 1]),
+    I("ヨウ化鉛(II)の沈殿", ["Pb^2+", "I^-"], ["PbI2"], [1, 2, 1]),
+    I("塩化鉛(II)の沈殿", ["Pb^2+", "Cl^-"], ["PbCl2"], [1, 2, 1]),
+    I("クロム酸銀の沈殿", ["Ag^+", "CrO4^2-"], ["Ag2CrO4"], [2, 1, 1]),
+    I("炭酸イオンと酸", ["CO3^2-", "H^+"], ["H2O", "CO2"], [1, 2, 1, 1]),
+  ],
+  [ // 中級
+    I("アルミニウムと酸（イオン反応式）", ["Al", "H^+"], ["Al^3+", "H2"], [2, 6, 2, 3]),
+    I("アルミニウムと銅(II)イオン", ["Al", "Cu^2+"], ["Al^3+", "Cu"], [2, 3, 2, 3]),
+    I("石灰石と酸（イオン反応式）", ["CaCO3", "H^+"], ["Ca^2+", "H2O", "CO2"], [1, 2, 1, 1, 1]),
+    I("塩素とヨウ化物イオン", ["Cl2", "I^-"], ["Cl^-", "I2"], [1, 2, 2, 1]),
+    I("塩素と臭化物イオン", ["Cl2", "Br^-"], ["Cl^-", "Br2"], [1, 2, 2, 1]),
+    I("鉄(III)イオンとヨウ化物イオン", ["Fe^3+", "I^-"], ["Fe^2+", "I2"], [2, 2, 2, 1]),
+    I("鉄(II)イオンと塩素", ["Fe^2+", "Cl2"], ["Fe^3+", "Cl^-"], [2, 1, 2, 2]),
+    I("スズ(II)イオンと鉄(III)イオン", ["Sn^2+", "Fe^3+"], ["Sn^4+", "Fe^2+"], [1, 2, 1, 2]),
+    I("チオ硫酸イオンとヨウ素", ["S2O3^2-", "I2"], ["S4O6^2-", "I^-"], [2, 1, 1, 2]),
+    I("クロム酸イオンと酸", ["CrO4^2-", "H^+"], ["Cr2O7^2-", "H2O"], [2, 2, 1, 1]),
+    I("アルミニウムと強塩基（イオン反応式）", ["Al", "OH^-", "H2O"], ["[Al(OH)4]^-", "H2"], [2, 2, 6, 2, 3]),
+    I("亜鉛と強塩基（イオン反応式）", ["Zn", "OH^-", "H2O"], ["[Zn(OH)4]^2-", "H2"], [1, 2, 2, 1, 1]),
+    I("水酸化亜鉛と強塩基", ["Zn(OH)2", "OH^-"], ["[Zn(OH)4]^2-"], [1, 2, 1]),
+    I("水酸化銅(II)とアンモニア水", ["Cu(OH)2", "NH3"], ["[Cu(NH3)4]^2+", "OH^-"], [1, 4, 1, 2]),
+    I("塩化銀とアンモニア水", ["AgCl", "NH3"], ["[Ag(NH3)2]^+", "Cl^-"], [1, 2, 1, 1]),
+    I("酸化銀とアンモニア水", ["Ag2O", "NH3", "H2O"], ["[Ag(NH3)2]^+", "OH^-"], [1, 4, 1, 2, 2]),
+  ],
+  [ // 上級
+    I("半反応式：過マンガン酸イオン（酸性）", ["MnO4^-", "H^+", "e^-"], ["Mn^2+", "H2O"], [1, 8, 5, 1, 4]),
+    I("半反応式：過マンガン酸イオン（中性・塩基性）", ["MnO4^-", "H2O", "e^-"], ["MnO2", "OH^-"], [1, 2, 3, 1, 4]),
+    I("半反応式：二クロム酸イオン", ["Cr2O7^2-", "H^+", "e^-"], ["Cr^3+", "H2O"], [1, 14, 6, 2, 7]),
+    I("半反応式：過酸化水素（酸化剤）", ["H2O2", "H^+", "e^-"], ["H2O"], [1, 2, 2, 2]),
+    I("半反応式：過酸化水素（還元剤）", ["H2O2"], ["O2", "H^+", "e^-"], [1, 1, 2, 2]),
+    I("半反応式：シュウ酸", ["(COOH)2"], ["CO2", "H^+", "e^-"], [1, 2, 2, 2]),
+    I("半反応式：二酸化硫黄（還元剤）", ["SO2", "H2O"], ["SO4^2-", "H^+", "e^-"], [1, 2, 1, 4, 2]),
+    I("半反応式：二酸化硫黄（酸化剤）", ["SO2", "H^+", "e^-"], ["S", "H2O"], [1, 4, 4, 1, 2]),
+    I("半反応式：希硝酸", ["HNO3", "H^+", "e^-"], ["NO", "H2O"], [1, 3, 3, 1, 2]),
+    I("半反応式：スズ(II)イオン", ["Sn^2+"], ["Sn^4+", "e^-"], [1, 1, 2]),
+    I("半反応式：ヨウ化物イオン", ["I^-"], ["I2", "e^-"], [2, 1, 2]),
+    I("過マンガン酸イオンと鉄(II)イオン", ["MnO4^-", "Fe^2+", "H^+"], ["Mn^2+", "Fe^3+", "H2O"], [1, 5, 8, 1, 5, 4]),
+    I("過マンガン酸イオンとシュウ酸", ["MnO4^-", "(COOH)2", "H^+"], ["Mn^2+", "CO2", "H2O"], [2, 5, 6, 2, 10, 8]),
+    I("過マンガン酸イオンとヨウ化物イオン", ["MnO4^-", "I^-", "H^+"], ["Mn^2+", "I2", "H2O"], [2, 10, 16, 2, 5, 8]),
+    I("過マンガン酸イオンと二酸化硫黄", ["MnO4^-", "SO2", "H2O"], ["Mn^2+", "SO4^2-", "H^+"], [2, 5, 2, 2, 5, 4]),
+    I("二クロム酸イオンと鉄(II)イオン", ["Cr2O7^2-", "Fe^2+", "H^+"], ["Cr^3+", "Fe^3+", "H2O"], [1, 6, 14, 2, 6, 7]),
+    I("二クロム酸イオンとヨウ化物イオン", ["Cr2O7^2-", "I^-", "H^+"], ["Cr^3+", "I2", "H2O"], [1, 6, 14, 2, 3, 7]),
+    I("過酸化水素とヨウ化物イオン", ["H2O2", "I^-", "H^+"], ["I2", "H2O"], [1, 2, 2, 1, 2]),
+    I("銅と希硝酸（イオン反応式）", ["Cu", "NO3^-", "H^+"], ["Cu^2+", "NO", "H2O"], [3, 2, 8, 3, 2, 4]),
+  ],
+];
+const MAX = 20, MIN = 1;
+const LV_NAME = ["初級", "中級", "上級"];
+
+/* 化学式 → {元素: 個数}。() と [] に対応 */
+function parseFormula(f) {
+  let i = 0;
+  function num() { let s = ""; while (i < f.length && /\d/.test(f[i])) s += f[i++]; return s ? +s : 1; }
+  function group() {
+    const c = {};
+    while (i < f.length && f[i] !== ")" && f[i] !== "]") {
+      if (f[i] === "(" || f[i] === "[") { i++; const g = group(); i++; const n = num(); for (const k in g) c[k] = (c[k] || 0) + g[k] * n; }
+      else { let el = f[i++]; while (i < f.length && /[a-z]/.test(f[i])) el += f[i++]; const n = num(); c[el] = (c[el] || 0) + n; }
+    }
+    return c;
+  }
+  return group();
+}
+/* "SO4^2-" のように ^ の後ろを電荷として読む。電子は "e^-" */
+const CHARGE = "電荷";
+function parse(s) {
+  const [f, ch] = s.split("^");
+  const c = f === "e" ? {} : parseFormula(f);
+  if (ch) { const m = ch.match(/^(\d*)([+-])$/); c[CHARGE] = (m[1] ? +m[1] : 1) * (m[2] === "+" ? 1 : -1); }
+  return c;
+}
+const fmt = s => {
+  const [f, ch] = s.split("^");
+  return f.replace(/(\d+)/g, "<sub>$1</sub>") + (ch ? `<sup>${ch.replace("-", "−")}</sup>` : "");
+};
+const signed = n => n > 0 ? "+" + n : n < 0 ? "−" + -n : "0";
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const $ = id => document.getElementById(id);
+const hintEl = $("hint-toggle");
+hintEl.checked = store.get("keisu-hint", true);
+
+/* S.set: 今回出題する問題の配列, S.res: 各問の結果 {stars, taps, shown, skipped} */
+let S = {
+  screen: "home", lv: store.get("keisu-lv", 0), cnt: store.get("keisu-cnt", 10), ion: false,
+  set: [], idx: 0, res: [], coefs: [], taps: 0, solved: false, shown: false,
+};
+let best = store.get("keisu-best", {});
+
+const cur = () => S.set[S.idx];
+const pool = () => S.ion ? [...PROBLEMS[S.lv], ...ION_PROBLEMS[S.lv]] : PROBLEMS[S.lv];
+const bestKey = () => S.lv + "-" + S.cnt + (S.ion ? "-ion" : "");
+const species = p => [...p.L, ...p.R];
+
+/* ---------- 画面切り替え ---------- */
+function show(name) {
+  S.screen = name;
+  for (const n of ["home", "game", "result"]) $("screen-" + n).hidden = n !== name;
+  window.scrollTo(0, 0);
+}
+
+function renderHome() {
+  document.querySelectorAll("#pick-lv .choice").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.lv === S.lv)));
+  document.querySelectorAll("#pick-cnt .choice").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.cnt === S.cnt)));
+  document.querySelectorAll("[data-best]").forEach(el => {
+    const lv = +el.dataset.best, b = best[lv + "-" + S.cnt + (S.ion ? "-ion" : "")];
+    el.textContent = b != null ? `${S.cnt}問の最高 ★${b} / ${S.cnt * 3}` : "";
+  });
+  $("ion-toggle").checked = S.ion;
+  const n = pool().length, ni = S.ion ? `（うちイオン反応式${ION_PROBLEMS[S.lv].length}問）` : "";
+  $("pool-note").textContent = `${LV_NAME[S.lv]}は全${n}問${ni}。その中から${S.cnt}問をランダムに出題します。`;
+}
+
+function startSession() {
+  S.set = shuffle(pool()).slice(0, S.cnt);
+  S.res = S.set.map(() => null);
+  show("game");
+  load(0);
+}
+
+/* ---------- ゲーム ---------- */
+function load(idx) {
+  S.idx = idx;
+  S.coefs = species(cur()).map(() => 1);
+  S.taps = 0; S.solved = false; S.shown = false;
+  renderGame();
+}
+
+function tally() {
+  const p = cur(), els = [], L = {}, R = {};
+  species(p).forEach((f, j) => {
+    const c = parse(f), side = j < p.L.length ? L : R;
+    for (const e in c) { if (!els.includes(e)) els.push(e); side[e] = (side[e] || 0) + c[e] * S.coefs[j]; }
+  });
+  for (const e of els) { L[e] = L[e] || 0; R[e] = R[e] || 0; }
+  if (els.includes(CHARGE)) els.push(els.splice(els.indexOf(CHARGE), 1)[0]);
+  return { els, L, R };
+}
+
+function judge() {
+  const { els, L, R } = tally();
+  return { balanced: els.every(e => L[e] === R[e]), g: S.coefs.reduce(gcd) };
+}
+
+function stars() {
+  const opt = cur().a.reduce((s, v) => s + v - 1, 0);
+  if (S.taps <= opt) return 3;
+  if (S.taps <= opt * 1.5 + 2) return 2;
+  return 1;
+}
+
+function renderEquation() {
+  const p = cur(), eq = $("equation"), lock = S.solved || S.shown;
+  const term = (f, j) => `
+    <div class="term" tabindex="0" data-j="${j}" aria-label="${f} の係数 ${S.coefs[j]}">
+      <div class="stepper">
+        <button type="button" data-j="${j}" data-d="1" aria-label="${f} の係数を増やす" ${S.coefs[j] >= MAX || lock ? "disabled" : ""}>△</button>
+        <span class="coef ${S.coefs[j] === 1 ? "one" : ""}" id="coef-${j}">${S.coefs[j]}</span>
+        <button type="button" data-j="${j}" data-d="-1" aria-label="${f} の係数を減らす" ${S.coefs[j] <= MIN || lock ? "disabled" : ""}>▽</button>
+      </div>
+      <span class="formula">${fmt(f)}</span>
+    </div>`;
+  const side = (arr, off) => `<div class="side">${arr.map((f, k) => (k ? '<span class="op">+</span>' : "") + term(f, k + off)).join("")}</div>`;
+  eq.innerHTML = side(p.L, 0) + '<span class="arrow" aria-label="反応して">⟶</span>' + side(p.R, p.L.length);
+}
+
+function renderLedger() {
+  const box = $("ledger");
+  if (!hintEl.checked) { box.innerHTML = '<div class="hidden-note">非表示中。自力で数えてみよう。</div>'; return; }
+  const { els, L, R } = tally();
+  box.innerHTML = `<table><thead><tr><th style="text-align:left;padding-left:8px">原子</th><th>左辺</th><th>右辺</th><th>状態</th></tr></thead><tbody>${
+    els.map(e => {
+      const ok = L[e] === R[e], q = e === CHARGE;
+      const st = ok ? '<span class="pill ok">一致</span>'
+        : q ? '<span class="pill ng">不一致</span>'
+        : `<span class="pill ng">${L[e] > R[e] ? "左が" : "右が"}${Math.abs(L[e] - R[e])}多い</span>`;
+      const v = n => q ? signed(n) : n;
+      return `<tr${q ? ' class="charge"' : ""}><td class="el">${e}</td><td class="n">${v(L[e])}</td><td class="n">${v(R[e])}</td><td>${st}</td></tr>`;
+    }).join("")}</tbody></table>`;
+}
+
+function renderStatus() {
+  const st = $("status"), j = judge();
+  st.className = "status";
+  if (S.shown) { st.classList.add("warn"); st.textContent = "これが答えです。次の問題に進みましょう。"; return; }
+  if (S.solved) {
+    const n = S.res[S.idx].stars;
+    st.classList.add("ok");
+    st.innerHTML = `正解！ ${S.taps} タップでクリア<span class="stars" aria-label="星${n}つ">${"★".repeat(n)}${"☆".repeat(3 - n)}</span>`;
+    return;
+  }
+  if (j.balanced && j.g > 1) { st.classList.add("warn"); st.textContent = `原子の数${cur().ion ? "と電荷" : ""}はそろっています。全体を ${j.g} で割って、最も簡単な整数比にしよう。`; return; }
+  st.textContent = cur().ion ? "△▽ で係数を調整して、両辺の原子の数と電荷の合計をそろえよう。" : "△▽ で係数を調整して、両辺の原子の数をそろえよう。";
+}
+
+function total() { return S.res.reduce((s, r) => s + (r?.stars || 0), 0); }
+
+function renderProgress() {
+  $("progress").innerHTML = S.set.map((_, i) => {
+    const r = S.res[i];
+    const cls = ["dot", r?.stars ? "done" : r ? "shown" : "", i === S.idx ? "current" : ""].join(" ");
+    return `<span class="${cls}">${i + 1}</span>`;
+  }).join("") + `<span class="score">★ <b>${total()}</b> / ${S.set.length * 3}</span>`;
+}
+
+function renderMeta() {
+  const last = S.idx === S.set.length - 1;
+  $("session-label").textContent = `${LV_NAME[S.lv]}・${S.set.length}問${S.ion ? "・イオン反応式あり" : ""}`;
+  $("qno").textContent = `第 ${S.idx + 1} 問 / ${S.set.length}`;
+  $("qname").textContent = cur().name;
+  $("taps").textContent = `タップ数 ${S.taps}`;
+  $("btn-answer").disabled = S.solved || S.shown;
+  $("btn-reset").disabled = S.solved || S.shown;
+  $("btn-next").textContent = last ? "結果を見る →" : (S.solved || S.shown ? "次の問題 →" : "スキップ →");
+}
+
+function renderGame() { renderEquation(); renderLedger(); renderStatus(); renderProgress(); renderMeta(); }
+
+function step(j, d) {
+  if (S.solved || S.shown) return;
+  const v = S.coefs[j] + d;
+  if (v < MIN || v > MAX) return;
+  S.coefs[j] = v; S.taps++;
+  const r = judge();
+  if (r.balanced && r.g === 1) { S.solved = true; S.res[S.idx] = { stars: stars(), taps: S.taps }; }
+  renderGame();
+  const c = $("coef-" + j); if (c) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
+}
+
+function finish() {
+  const t = total(), max = S.set.length * 3, k = bestKey();
+  const isBest = best[k] == null || t > best[k];
+  if (isBest) { best[k] = t; store.set("keisu-best", best); }
+  const solved = S.res.filter(r => r?.stars).length;
+  $("result-label").textContent = `${LV_NAME[S.lv]}・${S.set.length}問${S.ion ? "・イオン反応式あり" : ""}`;
+  $("result-score").innerHTML = `★${t}<small> / ${max}</small>`;
+  $("result-msg").textContent = `${S.set.length}問中 ${solved}問を自力で正解しました。` + (isBest && t > 0 ? " 自己ベストを更新！" : "");
+  $("result-list").innerHTML = S.set.map((p, i) => {
+    const r = S.res[i];
+    const st = r?.stars ? `<span class="st">${"★".repeat(r.stars)}${"☆".repeat(3 - r.stars)}</span>`
+      : `<span class="st skip">${r?.shown ? "答えを見た" : "スキップ"}</span>`;
+    return `<li><span class="nm">${i + 1}. ${p.name}</span>${st}</li>`;
+  }).join("");
+  show("result");
+}
+
+/* 長押しで連続変化 */
+let holdT = null, repT = null, holdFired = false;
+function stopHold() { clearTimeout(holdT); clearInterval(repT); holdT = repT = null; }
+$("equation").addEventListener("pointerdown", e => {
+  const b = e.target.closest(".stepper button"); if (!b || b.disabled) return;
+  e.preventDefault();
+  const j = +b.dataset.j, d = +b.dataset.d;
+  holdFired = true;
+  step(j, d);
+  holdT = setTimeout(() => { repT = setInterval(() => step(j, d), 110); }, 420);
+});
+["pointerup", "pointercancel"].forEach(t => document.addEventListener(t, stopHold));
+$("equation").addEventListener("click", e => {
+  const b = e.target.closest(".stepper button"); if (!b) return;
+  if (holdFired) { holdFired = false; return; } // pointerdown で処理済み
+  step(+b.dataset.j, +b.dataset.d); // キーボードの Enter/Space
+});
+$("equation").addEventListener("contextmenu", e => { if (e.target.closest(".stepper")) e.preventDefault(); });
+$("equation").addEventListener("keydown", e => {
+  const t = e.target.closest(".term"); if (!t || e.target !== t) return;
+  const j = +t.dataset.j, n = S.coefs.length;
+  const refocus = k => requestAnimationFrame(() => document.querySelector(`.term[data-j="${k}"]`)?.focus());
+  if (e.key === "ArrowUp") { e.preventDefault(); step(j, 1); refocus(j); }
+  else if (e.key === "ArrowDown") { e.preventDefault(); step(j, -1); refocus(j); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); refocus((j + 1) % n); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); refocus((j - 1 + n) % n); }
+});
+
+$("pick-lv").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; S.lv = +b.dataset.lv; store.set("keisu-lv", S.lv); renderHome(); });
+$("pick-cnt").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; S.cnt = +b.dataset.cnt; store.set("keisu-cnt", S.cnt); renderHome(); });
+$("ion-toggle").addEventListener("change", e => { S.ion = e.target.checked; renderHome(); });
+$("btn-start").addEventListener("click", startSession);
+$("btn-again").addEventListener("click", startSession);
+$("btn-home").addEventListener("click", () => { renderHome(); show("home"); });
+$("btn-menu").addEventListener("click", () => { renderHome(); show("home"); });
+$("btn-reset").addEventListener("click", () => { S.coefs = S.coefs.map(() => 1); renderGame(); });
+$("btn-answer").addEventListener("click", () => {
+  S.coefs = [...cur().a]; S.shown = true; S.res[S.idx] = { shown: true };
+  renderGame();
+});
+$("btn-next").addEventListener("click", () => {
+  if (!S.res[S.idx]) S.res[S.idx] = { skipped: true };
+  if (S.idx + 1 < S.set.length) load(S.idx + 1); else finish();
+});
+hintEl.addEventListener("change", () => { store.set("keisu-hint", hintEl.checked); renderLedger(); });
+
+/* 更新時に遊んでいる途中の状態を保つ */
+window.claude?.hot?.snapshot?.(() => ({ ...S }));
+function start(d) {
+  if (d && d.screen === "game" && Array.isArray(d.set) && d.set.every(p => p && Array.isArray(p.L))) {
+    Object.assign(S, d);
+    if (S.coefs.length !== species(cur()).length) load(S.idx); else renderGame(); show("game");
+  } else { renderHome(); show("home"); }
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
