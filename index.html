@@ -3,479 +3,664 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="化学反応式の係数を△▽ボタンで合わせる練習ゲーム（高校化学）">
-<title>係数ラボ</title>
+<title>博士の係数ラボ</title>
+<meta name="description" content="博士の研究室で、化学反応式の係数合わせと、係数の比を使った量的関係の計算に挑戦するドット絵ゲーム。">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
 <style>
-/* Layout: 実験ノート（方眼紙）の上に反応式カードを並べ、下に原子の収支表。スマホ縦一列 → 広い画面で2カラム */
+/* Layout: 博士の試薬棚シリーズと同じ。ドット絵の研究室（256x128）＋作業パネル。
+   研究室の実験台に原子カウンターを置き、左辺・右辺の原子を元素ごとの列に積んで個数をくらべる。シリーズに合わせて単一テーマ。 */
 :root {
-  --paper: #F3F6F7;
-  --grid: #DCE5E8;
-  --card: #FFFFFF;
-  --ink: #18283A;
-  --muted: #5E7183;
-  --line: #C6D3DA;
-  --accent: #0B7A84;
-  --accent-ink: #FFFFFF;
-  --good: #1C7C3C;
-  --good-bg: #E2F3E7;
-  --bad: #B4421A;
-  --bad-bg: #FBE9E1;
-  --display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
-  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --page: #e3f0dc;
+  --panel: #fffaee;
+  --panel-2: #f3e8cf;
+  --sel: #fbe3a6;
+  --line: #c8b088;
+  --gold: #e0ac3e;
+  --head: #8a5a14;
+  --focus: #2f8fd8;
+  --paper: #fffdf6;
+  --ink: #2a1d14;
+  --text: #3a2b1e;
+  --muted: #7d6a52;
+  --accent: #2f7f74;
+  --ok: #8fc06a;
+  --ok-ink: #16240c;
+  --ng: #e0505a;
+  --off: #ddd0b4;
+  --veil: rgba(42, 29, 20, 0.66);
+  --veil-text: #fff8e6;
+  --f-pixel: "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", monospace;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --f-chem: "IBM Plex Mono", "Courier New", monospace;
+  --px: 3px;
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0F161C; --grid: #18232C; --card: #16212A; --ink: #E2EAF0; --muted: #91A3B2;
-    --line: #2A3A47; --accent: #4CC0C9; --accent-ink: #062126; --good: #6FD08F; --good-bg: #173326;
-    --bad: #F08A63; --bad-bg: #3A2017; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #0F161C; --grid: #18232C; --card: #16212A; --ink: #E2EAF0; --muted: #91A3B2;
-  --line: #2A3A47; --accent: #4CC0C9; --accent-ink: #062126; --good: #6FD08F; --good-bg: #173326;
-  --bad: #F08A63; --bad-bg: #3A2017; color-scheme: dark;
-}
-
 * { box-sizing: border-box; }
-html, body { min-height: 100%; }
-body {
-  background-color: var(--paper);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 15px;
-  line-height: 1.6;
-  -webkit-tap-highlight-color: transparent;
-}
-.wrap {
-  max-width: 980px;
-  margin: 0 auto;
-  padding-block: 20px 40px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid;
-  gap: 18px;
-}
-button { font-family: inherit; color: inherit; touch-action: manipulation; }
-button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-
-/* screens */
-.screen { display: grid; gap: 18px; }
-.screen[hidden] { display: none; }
-.home { max-width: 640px; margin: 0 auto; width: 100%; }
-.hero h1 { font-size: 2.6rem; }
-.hero p { margin: 10px 0 0; color: var(--muted); }
-.hero .sample { margin-top: 14px; font-size: 1.3rem; font-weight: 700; letter-spacing: .02em; }
-.hero .sample .c { font-family: var(--display); color: var(--accent); font-weight: 400; }
-.hero .sample sub { font-size: .62em; }
-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-legend { float: left; width: 100%; font-size: .8rem; letter-spacing: .12em; color: var(--muted); font-weight: 700; margin-bottom: 10px; padding: 0; }
-legend + * { clear: both; }
-.choices { display: grid; gap: 10px; }
-.choices.lv { grid-template-columns: 1fr; }
-@media (min-width: 560px) { .choices.lv { grid-template-columns: repeat(3, 1fr); } }
-.choices.cnt { grid-template-columns: repeat(3, 1fr); }
-.choice {
-  text-align: left; border: 1.5px solid var(--line); background: var(--card); border-radius: 12px; padding: 12px 14px; cursor: pointer;
-  display: grid; gap: 4px; transition: border-color .15s, background .15s;
-}
-.choice b { font-size: 1.1rem; }
-.choice span { font-size: .8rem; color: var(--muted); line-height: 1.5; }
-.choice .best { font-family: var(--mono); font-size: .72rem; }
-.choices.cnt .choice { text-align: center; }
-.choice[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
-.choice[aria-pressed="true"] b { color: var(--accent); }
-.ion-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; cursor: pointer; }
-.ion-opt input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
-.ion-opt b { font-size: 1rem; }
-.ion-opt span { grid-column: 2; font-size: .8rem; color: var(--muted); line-height: 1.5; }
-.formula sup { font-size: .6em; vertical-align: .55em; line-height: 0; margin-left: 1px; }
-.hero .sample sup { font-size: .6em; }
-tr.charge td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
-.start { font-size: 1.05rem; padding: 14px; border-radius: 12px; width: 100%; }
-.settings-note { font-size: .85rem; color: var(--muted); }
-
-/* result */
-.result { max-width: 640px; margin: 0 auto; width: 100%; }
-.result .big { font-family: var(--display); font-size: 3rem; line-height: 1; }
-.result .big small { font-family: var(--mono); font-size: 1rem; color: var(--muted); }
-.result ul { list-style: none; margin: 0; padding: 0; display: grid; }
-.result li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
-.result li .nm { min-width: 0; }
-.result li .st { font-family: var(--mono); white-space: nowrap; color: var(--accent); }
-.result li .st.skip { color: var(--bad); font-family: var(--body); font-size: .85rem; font-weight: 700; }
-
-/* header */
-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
-h1 { font-family: var(--display); font-weight: 400; font-size: 1.9rem; line-height: 1.1; margin: 0; letter-spacing: .02em; }
-h1 small { display: block; font-family: var(--body); font-size: .8rem; color: var(--muted); letter-spacing: .08em; margin-top: 6px; font-weight: 700; }
-.levels { display: flex; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
-.levels button {
-  border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: .9rem; cursor: pointer; color: var(--muted);
-}
-.levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-
-/* progress strip */
-.progress { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.dot {
-  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--card);
-  font-family: var(--mono); font-size: .72rem; display: grid; place-items: center; color: var(--muted);
-}
-.dot.done { background: var(--good-bg); border-color: var(--good); color: var(--good); }
-.dot.shown { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
-.dot.current { outline: 2px solid var(--ink); outline-offset: 1px; color: var(--ink); }
-.score { margin-left: auto; font-family: var(--mono); font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.score b { color: var(--ink); }
-
-/* main board */
-.board {
-  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-  padding: 18px 16px 20px; display: grid; gap: 16px;
-}
-.qhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
-.qno { font-family: var(--mono); font-size: .8rem; color: var(--muted); letter-spacing: .06em; }
-.qname { font-weight: 700; font-size: 1rem; }
-.taps { font-family: var(--mono); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-
-.equation { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 8px; }
-.side { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 6px; }
-.op { font-family: var(--display); font-size: 1.4rem; color: var(--muted); padding: 0 2px; }
-.arrow { font-size: 1.8rem; color: var(--ink); padding: 0 6px; }
-
-.term {
-  display: flex; align-items: center; gap: 4px;
-  border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px 4px 4px; background: var(--paper);
-  transition: border-color .2s, background .2s;
-}
-.term:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.stepper { display: grid; grid-template-rows: auto auto auto; justify-items: center; }
-.stepper button {
-  width: 44px; height: 32px; border: 0; background: transparent; cursor: pointer; font-size: 1rem; color: var(--accent);
-  border-radius: 8px; user-select: none; -webkit-user-select: none;
-}
-.stepper button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.stepper button:active { background: color-mix(in srgb, var(--accent) 24%, transparent); }
-.stepper button:disabled { color: var(--line); cursor: default; background: transparent; }
-.coef {
-  font-family: var(--display); font-size: 1.7rem; line-height: 1; min-width: 1.6ch; text-align: center;
-  font-variant-numeric: tabular-nums; color: var(--ink);
-}
-.coef.one { color: var(--muted); opacity: .45; }
-.coef.bump { animation: bump .18s ease-out; }
-@keyframes bump { from { transform: scale(1.25); } to { transform: scale(1); } }
-.formula { font-size: 1.45rem; font-weight: 700; white-space: nowrap; letter-spacing: .01em; }
-.formula sub { font-size: .62em; vertical-align: -0.35em; line-height: 0; }
-
-.status {
-  min-height: 2.6em; display: flex; align-items: center; justify-content: center; text-align: center;
-  font-weight: 700; border-radius: 10px; padding: 8px 12px; background: var(--paper); color: var(--muted);
-}
-.status.ok { background: var(--good-bg); color: var(--good); }
-.status.warn { background: var(--bad-bg); color: var(--bad); }
-.stars { letter-spacing: .15em; margin-left: 8px; }
-
-.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.btn {
-  border: 1px solid var(--line); background: var(--card); padding: 9px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: .9rem;
-}
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn:disabled { opacity: .45; cursor: default; }
-
-/* atom ledger */
-.grid2 { display: grid; gap: 18px; grid-template-columns: 1fr; }
-@media (min-width: 760px) { .grid2 { grid-template-columns: 1.1fr .9fr; } }
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
-.panel h2 { font-size: .8rem; letter-spacing: .12em; color: var(--muted); margin: 0 0 10px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.switch { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; letter-spacing: 0; cursor: pointer; color: var(--ink); }
-.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th, td { text-align: center; padding: 7px 4px; border-bottom: 1px solid var(--line); }
-th { font-size: .75rem; color: var(--muted); font-weight: 700; letter-spacing: .06em; }
-td.el { font-weight: 700; font-size: 1.05rem; text-align: left; padding-left: 8px; }
-td.n { font-family: var(--mono); font-size: 1.05rem; }
-.pill { display: inline-block; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
-.pill.ok { background: var(--good-bg); color: var(--good); }
-.pill.ng { background: var(--bad-bg); color: var(--bad); }
-.hidden-note { color: var(--muted); font-size: .9rem; padding: 10px 0; }
-.howto ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
-.howto li::marker { font-family: var(--mono); color: var(--accent); }
-.howto p { margin: 10px 0 0; color: var(--muted); font-size: .85rem; }
-kbd { font-family: var(--mono); font-size: .8em; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; background: var(--paper); }
-
-@media (max-width: 420px) {
-  .formula { font-size: 1.25rem; }
-  .coef { font-size: 1.5rem; }
-  .stepper button { width: 40px; height: 30px; }
-}
-@media (prefers-reduced-motion: reduce) { .coef.bump { animation: none; } * { transition: none !important; } }
-</style>
-<style>
-:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
-body { margin: 0; }
 [hidden] { display: none !important; }
+html, body { margin: 0; background: var(--page); color: var(--text); }
+body { font-family: var(--f-body); line-height: 1.7; font-size: 15px; }
+.wrap {
+  max-width: 780px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 18px;
+}
+.px { box-shadow: 0 calc(-1 * var(--px)) 0 0 var(--c, var(--gold)), 0 var(--px) 0 0 var(--c, var(--gold)), calc(-1 * var(--px)) 0 0 0 var(--c, var(--gold)), var(--px) 0 0 0 var(--c, var(--gold)); }
+
+/* HUD */
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap; font-family: var(--f-pixel); }
+.hud h1 { margin: 0; font-size: 1.35rem; font-weight: 400; letter-spacing: .08em; color: var(--head); }
+.hud .meta { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; color: var(--muted); }
+.hud .score { color: var(--head); font-variant-numeric: tabular-nums; }
+.life { display: inline-flex; gap: 2px; font-size: 1.05rem; }
+.life i { font-style: normal; color: var(--ng); }
+.life i.off { color: var(--off); }
+.life.hurt { animation: hurt .5s steps(2) 1; }
+@keyframes hurt { 25%, 75% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+
+/* Stage */
+.stage { position: relative; aspect-ratio: 2 / 1; max-width: 100%; margin: var(--px); --c: var(--gold); overflow: hidden; background: var(--ink); }
+.stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.talk { position: absolute; top: 4%; max-width: 62%; font-size: clamp(12px, 2.3vw, 17px); }
+.talk.left { left: 3%; }
+.talk.right { right: 3%; }
+.bubble { background: var(--paper); color: var(--ink); --c: var(--ink); padding: 6px 12px 8px; font-family: var(--f-pixel); line-height: 1.55; }
+.bubble .who { display: block; font-size: .72em; letter-spacing: .15em; color: #2f6f68; }
+.bubble b { font-weight: 400; color: #a8325c; }
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px;
+  text-align: center; background: var(--veil); color: var(--veil-text); font-family: var(--f-pixel); }
+.overlay .big { font-size: clamp(1.4rem, 6vw, 2.4rem); color: var(--gold); letter-spacing: .1em; margin: 0; line-height: 1.3; }
+.overlay p { margin: 0; max-width: 32em; font-size: clamp(12px, 2.3vw, 15px); }
+.overlay .intro span { display: inline-block; }
+.overlay .intro b { color: var(--gold); font-weight: 400; }
+.overlay .rank b { color: var(--gold); font-weight: 400; font-size: 1.25em; }
+
+/* Buttons & panels */
+.btn { font-family: var(--f-pixel); font-size: 1rem; cursor: pointer; border: 0; background: var(--gold); color: var(--ink); --c: var(--ink);
+  padding: 8px 22px; margin: var(--px); touch-action: manipulation; }
+.btn.ghost { background: var(--panel-2); color: var(--text); --c: var(--line); }
+.btn.small { font-size: .85rem; padding: 4px 12px; }
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: translateY(2px); }
+.btn:disabled { opacity: .45; cursor: default; filter: none; transform: none; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 5px; }
+.panel { background: var(--panel); --c: var(--line); padding: 16px 18px 18px; margin: var(--px); display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel h2 { margin: 0; font-family: var(--f-pixel); font-weight: 400; font-size: 1rem; color: var(--head); letter-spacing: .08em; }
+.note { color: var(--muted); font-size: .82rem; margin: 0; }
+.opts { display: grid; gap: 8px; }
+.opts.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.opts.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.opts.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.opt { display: grid; gap: 2px; text-align: left; cursor: pointer; border: 0; min-width: 0; background: var(--panel-2); color: var(--text); --c: var(--line);
+  padding: 9px 12px; margin: var(--px); font-family: var(--f-body); }
+.opt b { font-family: var(--f-pixel); font-weight: 400; font-size: 1.02rem; }
+.opt small { color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.opt .best { color: var(--head); font-family: var(--f-pixel); }
+.opt[aria-pressed="true"] { --c: var(--gold); background: var(--sel); }
+.opt[aria-pressed="true"] b { color: var(--head); }
+.opts.center .opt { text-align: center; padding: 8px 6px; }
+.row-end { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.row-end .spacer { margin-right: auto; }
+.chem { font-family: var(--f-chem); font-weight: 500; }
+.chem sub { font-size: .66em; vertical-align: -0.3em; line-height: 0; }
+.chem sup { font-size: .62em; vertical-align: .6em; line-height: 0; margin-left: 1px; }
+
+/* 問題 */
+.qhead { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; }
+.qno { font-family: var(--f-pixel); font-size: .8rem; color: var(--muted); letter-spacing: .08em; }
+.qname { font-family: var(--f-pixel); font-size: 1.1rem; color: var(--text); }
+.taps { font-family: var(--f-pixel); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.eq { background: var(--paper); color: var(--ink); --c: var(--ink); margin: var(--px); padding: 10px 8px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 4px; }
+.eq .sidegrp { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 4px; }
+.eq .op { font-family: var(--f-pixel); font-size: 1.3rem; color: var(--muted); padding: 0 2px; }
+.eq .arrow { font-family: var(--f-pixel); font-size: 1.5rem; padding: 0 4px; }
+.term { display: flex; align-items: center; gap: 2px; padding: 2px 8px 2px 2px; background: var(--panel-2); }
+.term:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.term.sel { box-shadow: 0 0 0 3px var(--gold); background: var(--sel); }
+.stepper { display: grid; justify-items: center; }
+.stepper button { width: 40px; height: 28px; border: 0; background: transparent; cursor: pointer; font-family: var(--f-pixel); font-size: 1rem; color: var(--accent);
+  user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.stepper button:hover:not(:disabled) { background: var(--sel); }
+.stepper button:disabled { color: var(--off); cursor: default; }
+.coef { font-family: var(--f-pixel); font-size: 1.6rem; line-height: 1; min-width: 1.4ch; text-align: center; font-variant-numeric: tabular-nums; }
+.coef.one { color: var(--muted); opacity: .45; }
+/* 3回まちがえて表示した解答の係数は赤 */
+.coef.auto, .qeq.auto .cf { color: #d0303c; opacity: 1; }
+.coef.bump { animation: bump .18s steps(2) 1; }
+@keyframes bump { from { transform: scale(1.3); } to { transform: scale(1); } }
+.formula { font-size: 1.3rem; white-space: nowrap; }
+.eq.ok { --c: var(--ok); }
+.eq.ok .term { background: #e3f2d6; }
+.msg { margin: 0; min-height: 1.5em; font-family: var(--f-pixel); font-size: .95rem; }
+.msg.ok { color: #4f8a2a; }
+.msg.ng { color: var(--ng); }
+.msg .stars { color: var(--gold); letter-spacing: .1em; margin-left: 6px; }
+
+/* 原子の表 */
+.ledger-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tog { font-family: var(--f-pixel); font-size: .82rem; color: var(--muted); background: var(--panel-2); --c: var(--line); border: 0; padding: 3px 10px; margin: var(--px); cursor: pointer; }
+.tog[aria-pressed="true"] { color: var(--head); background: var(--sel); --c: var(--gold); }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: center; padding: 4px 4px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--f-pixel); font-weight: 400; font-size: .78rem; color: var(--muted); }
+td.el { text-align: left; font-family: var(--f-chem); font-weight: 600; white-space: nowrap; }
+td.el i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: 0; box-shadow: 0 0 0 1px var(--ink); }
+td.n { font-family: var(--f-pixel); font-size: 1.05rem; }
+.pill { font-family: var(--f-pixel); font-size: .75rem; padding: 0 6px; white-space: nowrap; }
+.pill.ok { background: var(--ok); color: var(--ok-ink); }
+.pill.ng { background: var(--ng); color: #fff; }
+.hidden-note { margin: 0; color: var(--muted); font-size: .88rem; }
+
+/* ふりかえり */
+.review { list-style: none; margin: 0; padding: 0; display: grid; }
+.review li { padding: 7px 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.review .nm { min-width: 0; font-size: .92rem; }
+.review .st { font-family: var(--f-pixel); white-space: nowrap; color: var(--head); }
+.review .st.skip { color: var(--ng); }
+.howto { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; font-size: .88rem; }
+.keys-help { margin: 0; color: var(--muted); font-size: .78rem; }
+.keys-help kbd { font-family: var(--f-pixel); font-size: .75rem; color: var(--text); background: var(--panel-2); padding: 0 5px; box-shadow: inset 0 0 0 1px var(--line); }
+@media (hover: none) { .keys-help { display: none; } }
+/* 量的関係モード */
+.qeq { margin: var(--px); padding: 6px 10px; background: var(--paper); --c: var(--ink); overflow-x: auto; white-space: nowrap; font-size: 1.05rem; }
+.qeq .cf { font-family: var(--f-pixel); font-weight: 400; color: var(--head); margin-right: 1px; }
+.qtext { margin: 0; font-size: 1.02rem; line-height: 1.95; }
+.qaw { margin: 0; font-size: .85rem; color: var(--muted); font-family: var(--f-chem); }
+.qtext .v { font-family: var(--f-chem); font-weight: 600; background: var(--sel); padding: 0 4px; white-space: nowrap; }
+.calc { display: grid; gap: 6px; }
+.screen { background: var(--paper); box-shadow: inset 0 0 0 2px var(--line); padding: 8px 12px; display: grid; gap: 2px; min-height: 64px; }
+.expr { font-family: var(--f-chem); font-size: 1.25rem; text-align: right; overflow-wrap: anywhere; min-height: 1.6em; line-height: 1.5; cursor: text; color: var(--ink); }
+.expr .paren, .expr .ph, .expr .zero { color: var(--muted); }
+.expr sup { font-size: .62em; vertical-align: .6em; line-height: 0; }
+.expr sup .caret { height: .8em; vertical-align: 0; }
+.expr .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--head); vertical-align: -0.15em; margin: 0 -1px; animation: blinkc 1s steps(1) infinite; }
+@keyframes blinkc { 50% { opacity: 0; } }
+.preview { font-family: var(--f-chem); text-align: right; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.preview b { color: var(--text); font-size: 1.05rem; }
+.preview sup { font-size: .62em; vertical-align: .6em; line-height: 0; }
+.unitline { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+.unitline b { font-family: var(--f-chem); color: var(--text); }
+.keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.key { font-family: var(--f-chem); font-size: 1.05rem; font-weight: 600; cursor: pointer; border: 0; background: var(--panel-2); color: var(--text); --c: var(--line); min-height: 40px; margin: var(--px); touch-action: manipulation; }
+.key sup { font-size: .62em; vertical-align: .6em; line-height: 0; }
+.key.op { background: #ece0c4; }
+.key.fn { color: var(--ng); }
+.key.const { font-size: .78rem; color: var(--head); white-space: nowrap; }
+.key:hover:not(:disabled) { --c: var(--gold); }
+.key:active:not(:disabled) { transform: translateY(2px); }
+.key:disabled { opacity: .45; cursor: default; }
+.qexplain { display: grid; gap: 6px; background: var(--panel-2); padding: 10px 14px; }
+.qans { margin: 0; font-family: var(--f-pixel); font-size: 1.05rem; color: var(--head); }
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; font-size: .92rem; }
+.steps sup, .qexplain sup, .msg sup { font-size: .62em; vertical-align: .6em; line-height: 0; }
+.fu-note { color: var(--muted); margin-left: 6px; font-size: .8em; }
+
+/* 付せん（博士の試薬棚と同じ形） */
+.fu { display: inline-block; width: .74em; height: .98em; margin-right: .35em; vertical-align: -.08em; position: relative;
+  background: #d9cfb8; clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
+.fu::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 22%; background: rgba(0, 0, 0, .12); }
+.fu.on, [aria-pressed="true"] > .fu, .lp-grp .fu, .opt .fu, #bmListBtn .fu { background: #ffd23f; }
+.bmbtn { font-family: var(--f-pixel); font-size: .85rem; color: var(--muted); background: var(--panel-2); --c: var(--line); border: 0; padding: 3px 10px; margin: var(--px); cursor: pointer; white-space: nowrap; }
+.bmbtn[aria-pressed="true"] { color: var(--head); background: var(--sel); --c: var(--gold); }
+.review li { align-items: center; }
+.review .st { margin-left: auto; }
+.review .bmbtn { padding: 1px 8px; font-size: .78rem; }
+#lvOpts [data-v="bm"] { grid-column: 1 / -1; }
+.opt:disabled { opacity: .5; cursor: default; }
+.linkbtn { font-family: var(--f-pixel); font-size: .9rem; color: var(--accent); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.lp-tools { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+
+/* 化学反応一覧 */
+.listpage { max-width: 880px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; }
+.lp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap; }
+.lp-head h1 { margin: 0; font-family: var(--f-pixel); font-weight: 400; font-size: 1.35rem; letter-spacing: .08em; color: var(--head); }
+.lp-tabs { display: flex; flex-wrap: wrap; gap: 10px; }
+.lp-tabs .opt { padding: 6px 12px; }
+.lp-grp { margin: 8px 0 0; font-family: var(--f-pixel); font-weight: 400; font-size: 1.05rem; color: var(--head); letter-spacing: .08em; border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+.lp-grp small { font-size: .8em; color: var(--muted); letter-spacing: 0; }
+.lp-list { display: grid; gap: 10px 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); align-items: start; }
+.lp-empty { margin: 8px 0 0; color: var(--muted); }
+.lp-card { background: var(--panel); --c: var(--line); margin: var(--px); min-width: 0; }
+.lp-card > summary { list-style: none; cursor: pointer; padding: 9px 14px; display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; font-family: var(--f-pixel); font-size: 1rem; }
+.lp-card > summary::-webkit-details-marker { display: none; }
+.lp-card > summary::before { content: '▶'; font-size: .7em; color: var(--muted); }
+.lp-card[open] > summary::before { content: '▼'; }
+.lp-card > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.lp-card[open] > summary { border-bottom: 1px solid var(--line); }
+.lp-card .no { font-family: var(--f-pixel); font-size: .72rem; color: var(--muted); }
+.lp-card .nm { flex: 1 1 12em; min-width: 0; }
+.lp-card .badges { margin-left: auto; display: inline-flex; gap: 4px; align-items: center; }
+.lp-card .crown { font-size: 1.05rem; line-height: 1; }
+.lp-card > summary .bmbtn { margin: 0; padding: 1px 7px; font-size: .78rem; }
+.lp-locked { padding: 9px 14px; display: flex; align-items: baseline; gap: 4px 12px; font-family: var(--f-pixel); color: var(--muted); background: var(--panel-2); }
+.lp-locked .q { letter-spacing: .15em; }
+.lp-locked small { margin-left: auto; font-size: .78rem; }
+.lp-body { padding: 10px 14px 14px; display: grid; gap: 6px; }
+.lp-eqmain { margin: 0; padding: 6px 10px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); overflow-x: auto; white-space: nowrap; font-size: 1.02rem; }
+.lp-eqmain .cf { font-family: var(--f-pixel); font-weight: 400; color: var(--head); margin-right: 1px; }
+.lp-atoms { margin: 0; font-size: .85rem; color: var(--text); }
+.lp-atoms .chem { font-weight: 600; }
+.lp-note { margin: 0; font-size: .82rem; color: var(--muted); }
+.lp-note .gold { color: var(--gold); letter-spacing: .08em; }
+.nb-prog { display: grid; gap: 6px; background: var(--panel); --c: var(--line); margin: var(--px); padding: 10px 14px; }
+.nb-prog .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-family: var(--f-pixel); }
+.nb-prog .big { font-size: 1.1rem; color: var(--head); }
+.nb-bar { height: 10px; background: var(--off); position: relative; }
+.nb-bar i { position: absolute; inset: 0 auto 0 0; background: var(--gold); }
+.nb-prog small { color: var(--muted); }
+
+/* PC: ステージ左、パネル右 */
+.side { display: contents; }
+@media (min-width: 900px) and (min-height: 540px) {
+  html, body { height: 100%; }
+  .wrap { height: 100%; max-width: 1500px; container-type: size; grid-template-columns: auto auto; justify-content: center; align-content: center; gap: 28px; }
+  .stage-col, .side { --sideW: clamp(360px, 34vw, 480px); --stageW: min(100cqw - var(--sideW) - 28px, 200cqh - 4px); }
+  .stage-col { width: var(--stageW); }
+  .side { width: var(--sideW); height: min(100cqh, calc((var(--stageW) - 6px) / 1.2 + 6px)); display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding: 4px; }
+  .hud { flex-direction: column; align-items: stretch; gap: 6px; }
+  .talk { font-size: clamp(13px, 1.4vw, 19px); }
+}
+@media (max-width: 899px) {
+  html { scroll-padding-top: calc(50vw + 24px); }
+  .stage-col { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--page); padding-block: 6px 4px; margin-top: -6px; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--page); }
+}
+@media (max-width: 520px) {
+  .talk { max-width: 80%; }
+  .formula { font-size: 1.1rem; }
+  .coef { font-size: 1.35rem; }
+  .stepper button { width: 34px; height: 26px; }
+  .opts.c3 .opt small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .btn:active { transform: none; } .life.hurt, .coef.bump { animation: none; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- スタート画面 -->
-  <section class="screen home" id="screen-home">
-    <div class="hero">
-      <h1>係数ラボ<small>化学反応式の係数を △▽ で合わせよう</small></h1>
-      <div class="sample" aria-hidden="true"><span class="c">2</span>H<sub>2</sub> + O<sub>2</sub> ⟶ <span class="c">2</span>H<sub>2</sub>O</div>
+<main class="wrap">
+  <div class="stage-col">
+    <div class="stage px" id="stage">
+      <canvas id="cv" width="256" height="128" aria-label="研究室の実験台に原子カウンターがあり、左に博士、右に助手が立っているドット絵"></canvas>
+      <div class="talk left" id="talk" hidden><div class="bubble px"><span class="who" id="who">博士</span><span id="line"></span></div></div>
+      <div class="overlay" id="titleScreen">
+        <p class="big">博士の係数ラボ</p>
+        <p class="intro"><span>係数モード：係数を正しく合わせると、</span><span><b>原子カウンター</b>の両側をぴたりとそろえよう。</span><br><span>量的関係モード：係数の比から、</span><span>物質量・質量・個数・気体の体積を求めよう。</span><br><span>まちがえると、ライフが減るぞ。</span></p>
+      </div>
+      <div class="overlay" id="endScreen" hidden>
+        <p class="big" id="endBig"></p>
+        <p class="rank" id="endRank"></p>
+        <p id="endMsg"></p>
+      </div>
     </div>
+  </div>
 
-    <fieldset class="panel">
-      <legend>難易度</legend>
-      <div class="choices lv" id="pick-lv">
-        <button type="button" class="choice" id="pick-lv-0" data-lv="0"><b>初級</b><span>燃焼・中和・金属と酸など、物質が2〜4個の式</span><span class="best" data-best="0"></span></button>
-        <button type="button" class="choice" id="pick-lv-1" data-lv="1"><b>中級</b><span>炭化水素の燃焼、両性金属、気体の発生など</span><span class="best" data-best="1"></span></button>
-        <button type="button" class="choice" id="pick-lv-2" data-lv="2"><b>上級</b><span>酸化還元反応、工業的製法、滴定の反応</span><span class="best" data-best="2"></span></button>
+  <div class="side">
+    <header class="hud">
+      <h1>博士の係数ラボ</h1>
+      <div class="meta" id="meta" hidden>
+        <span id="qnum"></span>
+        <span class="life" id="life" aria-label="ライフ"></span>
+        <span class="score" id="score"></span>
+        <button class="bmbtn" id="bmBtn" type="button" aria-pressed="false"><i class="fu" aria-hidden="true"></i>付せんをはる</button>
+        <button class="btn ghost small px" id="quitBtn" type="button">やめる</button>
       </div>
-    </fieldset>
-
-    <fieldset class="panel">
-      <legend>問題数</legend>
-      <div class="choices cnt" id="pick-cnt">
-        <button type="button" class="choice" id="pick-cnt-5" data-cnt="5"><b>5問</b></button>
-        <button type="button" class="choice" id="pick-cnt-10" data-cnt="10"><b>10問</b></button>
-        <button type="button" class="choice" id="pick-cnt-20" data-cnt="20"><b>20問</b></button>
-      </div>
-    </fieldset>
-
-    <fieldset class="panel">
-      <legend>オプション</legend>
-      <label class="ion-opt" for="ion-toggle">
-        <input type="checkbox" id="ion-toggle">
-        <b>イオン反応式を含める</b>
-        <span>原子の数に加えて、両辺の電荷の合計もそろえる問題が混ざります。上級には電子 e<sup>−</sup> を含む半反応式も出ます。</span>
-      </label>
-    </fieldset>
-
-    <button type="button" class="btn primary start" id="btn-start">スタート</button>
-    <div class="settings-note" id="pool-note"></div>
-  </section>
-
-  <!-- ゲーム画面 -->
-  <section class="screen" id="screen-game" hidden>
-    <header>
-      <h1>係数ラボ<small id="session-label"></small></h1>
-      <button type="button" class="btn" id="btn-menu">← 最初の画面へ</button>
     </header>
 
-    <div class="progress" id="progress" aria-label="進み具合"></div>
+    <!-- メニュー -->
+    <section class="panel px" id="menu">
+      <div class="lp-tools"><button class="linkbtn" id="listBtn" type="button">📓 化学反応一覧 ▶</button><button class="linkbtn" id="bmListBtn" type="button"><i class="fu" aria-hidden="true"></i>付せん一覧 ▶</button></div>
+      <h2>モード</h2>
+      <div class="opts c2" id="modeOpts">
+        <button class="opt px" type="button" id="mode-coef" data-v="coef"><b>係数</b><small>反応式の係数を合わせる</small></button>
+        <button class="opt px" type="button" id="mode-qty" data-v="qty"><b>量的関係</b><small>係数の比から、物質量・質量・個数・気体の体積を求める</small></button>
+      </div>
+      <h2>難易度</h2>
+      <div class="opts c3" id="lvOpts">
+        <button class="opt px" type="button" id="lv-0" data-v="0"><b>初級</b><small>燃焼・中和・金属と酸</small><small class="best" data-best="0"></small></button>
+        <button class="opt px" type="button" id="lv-1" data-v="1"><b>中級</b><small>炭化水素・両性金属・気体の発生</small><small class="best" data-best="1"></small></button>
+        <button class="opt px" type="button" id="lv-2" data-v="2"><b>上級</b><small>酸化還元・工業的製法・滴定</small><small class="best" data-best="2"></small></button>
+        <button class="opt px" type="button" id="lv-bm" data-v="bm"><b><i class="fu" aria-hidden="true"></i>付せんをはった反応</b><small id="cnt-bm"></small><small class="best" data-best="bm"></small></button>
+      </div>
+      <h2>問題数</h2>
+      <div class="opts c4 center" id="cntOpts">
+        <button class="opt px" type="button" id="cnt-5" data-v="5"><b>5問</b></button>
+        <button class="opt px" type="button" id="cnt-10" data-v="10"><b>10問</b></button>
+        <button class="opt px" type="button" id="cnt-20" data-v="20"><b>20問</b></button>
+        <button class="opt px" type="button" id="cnt-all" data-v="all"><b>全問</b></button>
+      </div>
+      <div id="ionSec" class="opts-sec">
+      <h2>イオン反応式</h2>
+      <div class="opts c2 center" id="ionOpts">
+        <button class="opt px" type="button" id="ion-0" data-v="0"><b>ふくめない</b></button>
+        <button class="opt px" type="button" id="ion-1" data-v="1"><b>ふくめる</b><small>電荷もそろえる</small></button>
+      </div>
+      </div>
+      <h2>ライフ</h2>
+      <div class="opts c3 center" id="lifeOpts">
+        <button class="opt px" type="button" id="life-3" data-v="3"><b><span style="color:var(--ng)">♥</span> 3</b></button>
+        <button class="opt px" type="button" id="life-5" data-v="5"><b><span style="color:var(--ng)">♥</span> 5</b></button>
+        <button class="opt px" type="button" id="life-7" data-v="7"><b><span style="color:var(--ng)">♥</span> 7</b></button>
+      </div>
+      <p class="note" id="poolNote"></p>
+      <p class="keys-help">メニューと一覧は <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> で選んで <kbd>Enter</kbd> で決定。問題では：<kbd>←</kbd><kbd>→</kbd> 物質やボタンを選ぶ　<kbd>↑</kbd><kbd>↓</kbd> 係数を変える　<kbd>Enter</kbd> 反応させる（反応のあとは つぎの問題へ）　<kbd>Esc</kbd> やめる</p>
+      <div class="row-end"><button class="btn px" id="startBtn" type="button">研究室に入る</button></div>
+    </section>
 
-    <section class="board" aria-live="polite">
+    <!-- 実験 -->
+    <section class="panel px" id="gamePanel" hidden>
       <div class="qhead">
         <div><div class="qno" id="qno"></div><div class="qname" id="qname"></div></div>
         <div class="taps" id="taps"></div>
       </div>
-      <div class="equation" id="equation"></div>
-      <div class="status" id="status"></div>
-      <div class="actions">
-        <button type="button" class="btn" id="btn-reset">すべて 1 に戻す</button>
-        <button type="button" class="btn" id="btn-answer">答えを見る</button>
-        <button type="button" class="btn primary" id="btn-next">次の問題 →</button>
+      <div id="coefTop"><div class="eq px" id="eq" aria-label="反応式"></div></div>
+      <div id="qtyTop" hidden>
+        <p class="qeq px" id="qEq"></p>
+        <p class="qtext" id="qText"></p>
+        <p class="qaw" id="qAw" hidden></p>
+        <div class="calc">
+          <div class="screen"><div class="expr" id="expr" aria-live="off"></div><div class="preview" id="preview"></div></div>
+          <div class="unitline"><span>答えの単位</span><b id="ansUnit"></b></div>
+          <div class="row-end" id="qPlayRow" hidden><button class="btn px" id="qCheckBtn" type="button">答え合わせ</button></div>
+          <div class="keys" id="keys">
+            <button class="key fn px" data-k="C" type="button" aria-label="すべて消す">C</button>
+            <button class="key fn px" data-k="BS" type="button" aria-label="1文字消す">⌫</button>
+            <button class="key op px" data-k="L" type="button" aria-label="カーソルを左へ">◀</button>
+            <button class="key op px" data-k="R" type="button" aria-label="カーソルを右へ">▶</button>
+            <button class="key px" data-k="7" type="button">7</button><button class="key px" data-k="8" type="button">8</button><button class="key px" data-k="9" type="button">9</button>
+            <button class="key op px" data-k="/" type="button" aria-label="割る">÷</button>
+            <button class="key px" data-k="4" type="button">4</button><button class="key px" data-k="5" type="button">5</button><button class="key px" data-k="6" type="button">6</button>
+            <button class="key op px" data-k="*" type="button" aria-label="掛ける">×</button>
+            <button class="key px" data-k="1" type="button">1</button><button class="key px" data-k="2" type="button">2</button><button class="key px" data-k="3" type="button">3</button>
+            <button class="key op px" data-k="-" type="button" aria-label="引く">−</button>
+            <button class="key px" data-k="0" type="button">0</button><button class="key px" data-k="." type="button">.</button>
+            <button class="key op px" data-k="E" type="button" aria-label="10の累乗">10<sup>n</sup></button>
+            <button class="key op px" data-k="+" type="button" aria-label="足す">+</button>
+            <button class="key op px" data-k="(" type="button">(</button><button class="key op px" data-k=")" type="button">)</button>
+            <button class="key const px" data-k="NA" type="button" aria-label="6.0かける10の23乗">6.0×10<sup>23</sup></button>
+            <button class="key const px" data-k="VM" type="button">22.4</button>
+          </div>
+        </div>
       </div>
+      <p class="msg" id="msg" aria-live="polite"></p>
+      <div class="row-end" id="playRow">
+        <button class="btn ghost small px spacer" id="resetBtn" type="button">すべて 1 に戻す</button>
+        <button class="btn px" id="reactBtn" type="button">反応させる</button>
+      </div>
+      <div class="qexplain" id="qExplain" hidden></div>
+      <div class="row-end" id="nextRow" hidden>
+        <button class="btn px" id="nextBtn" type="button">つぎの問題へ ▶</button>
+      </div>
+      <div id="coefBottom">
+      <div class="ledger-h">
+        <h2>原子カウンターの記録</h2>
+        <button class="tog px" id="hintBtn" type="button" aria-pressed="true">ヒント：表示中</button>
+      </div>
+      <div id="ledger"></div>
+      <ol class="howto">
+        <li>△▽ で係数を変える（1〜20）。長押しで連続して変わる。</li>
+        <li>原子カウンターには、左辺・右辺の原子が元素ごとの列に積まれる。</li>
+        <li>係数は最も簡単な整数比に。そろったら「反応させる」。</li>
+        <li>★は 3 つからはじまり、失敗するとライフが 1 減って、★も 1 つ減る（最低 1 つ）。同じ問題で 3 回まちがえると、解答が表示される（★なし）。</li>
+      </ol>
+      </div>
+      <div id="qtyBottom" hidden>
+        <ol class="howto">
+          <li>係数の比は、物質量（mol）の比を表す。与えられた量を物質量に直し、係数の比をかけて、問われた量に直そう。</li>
+          <li>アボガドロ定数 6.0×10<sup>23</sup> /mol、気体のモル体積 22.4 L/mol（標準状態：0 ℃、1.013×10<sup>5</sup> Pa）。質量の問題では、使う原子量が問題文の下に出る。モル質量（g/mol）は、原子量の和に単位 g/mol をつけたもの。</li>
+          <li>電卓で式を入力して「答え合わせ」。まちがえるとライフが 1 減り、★も 1 つ減る。同じ問題で 3 回まちがえると、解答が表示される（★なし）。</li>
+        </ol>
+        <p class="keys-help">キーボード：数字・+ − * / ( )、<kbd>E</kbd> 10ⁿ、<kbd>A</kbd> 6.0×10²³、<kbd>V</kbd> 22.4 をそのまま入力できる。<kbd>←</kbd><kbd>→</kbd> カーソル移動、<kbd>Backspace</kbd> 1文字消す、<kbd>Esc</kbd> すべて消す、<kbd>Enter</kbd> 答え合わせ・つぎへ。<kbd>↑</kbd><kbd>↓</kbd> で「やめる」・「答え合わせ」・電卓のボタン・「博士に解答を聞く」を選び、電卓のボタンの上では <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> で移動して <kbd>Enter</kbd> で押す。</p>
+      </div>
+      <div class="row-end" id="askRow"><button class="btn ghost small px" id="askBtn" type="button">博士に解答を聞く</button></div>
     </section>
 
-    <div class="grid2">
-      <section class="panel">
-        <h2>原子の数（左辺 ⇄ 右辺）
-          <label class="switch"><input type="checkbox" id="hint-toggle" checked> 表示する</label>
-        </h2>
-        <div id="ledger"></div>
-      </section>
-      <section class="panel howto">
-        <h2>あそびかた</h2>
-        <ol>
-          <li>各物質の △ で係数を増やし、▽ で減らします（1〜20）。長押しで連続変化。</li>
-          <li>左辺と右辺で、すべての原子の数がそろえば正解です。イオン反応式では電荷の合計もそろえます。</li>
-          <li>係数は最も簡単な整数比に。4,2,4 ではなく 2,1,2 にします。</li>
-          <li>少ないタップで解くほど ★ が増えます。</li>
-        </ol>
-        <p>キーボード：物質を選んで <kbd>↑</kbd><kbd>↓</kbd>、<kbd>←</kbd><kbd>→</kbd> で移動。係数 1 は式では省略されるため薄く表示しています。</p>
-      </section>
-    </div>
-  </section>
+    <!-- ふりかえり -->
+    <section class="panel px" id="reviewPanel" hidden>
+      <h2>ふりかえり</h2>
+      <ul class="review" id="review"></ul>
+      <div class="row-end">
+        <button class="btn ghost px" id="menuBtn" type="button">メニューへ</button>
+        <button class="btn px" id="retryBtn" type="button">同じ設定でもう一度</button>
+      </div>
+    </section>
+  </div>
+</main>
 
-  <!-- 結果画面 -->
-  <section class="screen result" id="screen-result" hidden>
-    <div class="hero">
-      <h1>結果<small id="result-label"></small></h1>
-    </div>
-    <div class="panel">
-      <div class="big" id="result-score"></div>
-      <p id="result-msg"></p>
-    </div>
-    <div class="panel">
-      <h2>問題ごとの成績</h2>
-      <ul id="result-list"></ul>
-    </div>
-    <div class="actions">
-      <button type="button" class="btn" id="btn-home">最初の画面へ</button>
-      <button type="button" class="btn primary" id="btn-again">同じ設定でもう一度</button>
-    </div>
-  </section>
-</div>
+<section class="listpage" id="listPage" hidden aria-labelledby="listTitle">
+  <header class="lp-head">
+    <h1 id="listTitle">📓 化学反応一覧</h1>
+    <button class="btn ghost small px" id="listBack" type="button">◀ タイトルへ戻る</button>
+  </header>
+  <div class="lp-tabs" id="listTabs">
+    <button class="opt px" type="button" data-v="all" aria-pressed="true"><b>すべて</b></button>
+    <button class="opt px" type="button" data-v="0" aria-pressed="false"><b>初級</b></button>
+    <button class="opt px" type="button" data-v="1" aria-pressed="false"><b>中級</b></button>
+    <button class="opt px" type="button" data-v="2" aria-pressed="false"><b>上級</b></button>
+    <button class="opt px" type="button" data-v="bm" aria-pressed="false"><b><i class="fu" aria-hidden="true"></i>付せん</b></button>
+  </div>
+  <div class="lp-tools"><button class="linkbtn" id="openAllBtn" type="button">すべて開く</button><button class="linkbtn" id="closeAllBtn" type="button">すべて閉じる</button></div>
+  <div id="listBody"></div>
+  <div class="row-end"><button class="btn ghost small px" id="listBack2" type="button">◀ タイトルへ戻る</button></div>
+</section>
 
 <script>
-const P = (name, L, R, a) => ({ name, L, R, a });
+(() => {
+'use strict';
+// =========================================================
+// 問題データ（係数ラボと同じ）
+// =========================================================
+const P_ = (name, L, R, a) => ({ name, L, R, a });
 const PROBLEMS = [
   [ // 初級
-    P("水素の燃焼", ["H2", "O2"], ["H2O"], [2, 1, 2]),
-    P("水の電気分解", ["H2O"], ["H2", "O2"], [2, 2, 1]),
-    P("アンモニアの合成（ハーバー・ボッシュ法）", ["N2", "H2"], ["NH3"], [1, 3, 2]),
-    P("塩化水素の生成", ["H2", "Cl2"], ["HCl"], [1, 1, 2]),
-    P("マグネシウムの燃焼", ["Mg", "O2"], ["MgO"], [2, 1, 2]),
-    P("銅の酸化", ["Cu", "O2"], ["CuO"], [2, 1, 2]),
-    P("ナトリウムの酸化", ["Na", "O2"], ["Na2O"], [4, 1, 2]),
-    P("鉄の燃焼", ["Fe", "O2"], ["Fe3O4"], [3, 2, 1]),
-    P("塩化ナトリウムの生成", ["Na", "Cl2"], ["NaCl"], [2, 1, 2]),
-    P("一酸化炭素の燃焼", ["CO", "O2"], ["CO2"], [2, 1, 2]),
-    P("一酸化窒素の酸化", ["NO", "O2"], ["NO2"], [2, 1, 2]),
-    P("二酸化硫黄の酸化（接触法）", ["SO2", "O2"], ["SO3"], [2, 1, 2]),
-    P("メタンの燃焼", ["CH4", "O2"], ["CO2", "H2O"], [1, 2, 1, 2]),
-    P("エチレンの燃焼", ["C2H4", "O2"], ["CO2", "H2O"], [1, 3, 2, 2]),
-    P("過酸化水素の分解", ["H2O2"], ["H2O", "O2"], [2, 2, 1]),
-    P("塩素酸カリウムの分解", ["KClO3"], ["KCl", "O2"], [2, 2, 3]),
-    P("酸化銀の熱分解", ["Ag2O"], ["Ag", "O2"], [2, 4, 1]),
-    P("酸化銅(II)の炭素による還元", ["CuO", "C"], ["Cu", "CO2"], [2, 1, 2, 1]),
-    P("ナトリウムと水", ["Na", "H2O"], ["NaOH", "H2"], [2, 2, 2, 1]),
-    P("カルシウムと水", ["Ca", "H2O"], ["Ca(OH)2", "H2"], [1, 2, 1, 1]),
-    P("マグネシウムと塩酸", ["Mg", "HCl"], ["MgCl2", "H2"], [1, 2, 1, 1]),
-    P("鉄と塩酸", ["Fe", "HCl"], ["FeCl2", "H2"], [1, 2, 1, 1]),
-    P("硫酸と水酸化ナトリウムの中和", ["H2SO4", "NaOH"], ["Na2SO4", "H2O"], [1, 2, 1, 2]),
-    P("塩酸と水酸化カルシウムの中和", ["HCl", "Ca(OH)2"], ["CaCl2", "H2O"], [2, 1, 1, 2]),
-    P("水酸化ナトリウムと二酸化炭素", ["NaOH", "CO2"], ["Na2CO3", "H2O"], [2, 1, 1, 1]),
+    P_("水素の燃焼", ["H2", "O2"], ["H2O"], [2, 1, 2]),
+    P_("水の電気分解", ["H2O"], ["H2", "O2"], [2, 2, 1]),
+    P_("アンモニアの合成（ハーバー・ボッシュ法）", ["N2", "H2"], ["NH3"], [1, 3, 2]),
+    P_("塩化水素の生成", ["H2", "Cl2"], ["HCl"], [1, 1, 2]),
+    P_("マグネシウムの燃焼", ["Mg", "O2"], ["MgO"], [2, 1, 2]),
+    P_("銅の酸化", ["Cu", "O2"], ["CuO"], [2, 1, 2]),
+    P_("ナトリウムの酸化", ["Na", "O2"], ["Na2O"], [4, 1, 2]),
+    P_("鉄の燃焼", ["Fe", "O2"], ["Fe3O4"], [3, 2, 1]),
+    P_("塩化ナトリウムの生成", ["Na", "Cl2"], ["NaCl"], [2, 1, 2]),
+    P_("一酸化炭素の燃焼", ["CO", "O2"], ["CO2"], [2, 1, 2]),
+    P_("一酸化窒素の酸化", ["NO", "O2"], ["NO2"], [2, 1, 2]),
+    P_("二酸化硫黄の酸化（接触法）", ["SO2", "O2"], ["SO3"], [2, 1, 2]),
+    P_("メタンの燃焼", ["CH4", "O2"], ["CO2", "H2O"], [1, 2, 1, 2]),
+    P_("エチレンの燃焼", ["C2H4", "O2"], ["CO2", "H2O"], [1, 3, 2, 2]),
+    P_("過酸化水素の分解", ["H2O2"], ["H2O", "O2"], [2, 2, 1]),
+    P_("塩素酸カリウムの分解", ["KClO3"], ["KCl", "O2"], [2, 2, 3]),
+    P_("酸化銀の熱分解", ["Ag2O"], ["Ag", "O2"], [2, 4, 1]),
+    P_("酸化銅(II)の炭素による還元", ["CuO", "C"], ["Cu", "CO2"], [2, 1, 2, 1]),
+    P_("ナトリウムと水", ["Na", "H2O"], ["NaOH", "H2"], [2, 2, 2, 1]),
+    P_("カルシウムと水", ["Ca", "H2O"], ["Ca(OH)2", "H2"], [1, 2, 1, 1]),
+    P_("マグネシウムと塩酸", ["Mg", "HCl"], ["MgCl2", "H2"], [1, 2, 1, 1]),
+    P_("鉄と塩酸", ["Fe", "HCl"], ["FeCl2", "H2"], [1, 2, 1, 1]),
+    P_("硫酸と水酸化ナトリウムの中和", ["H2SO4", "NaOH"], ["Na2SO4", "H2O"], [1, 2, 1, 2]),
+    P_("塩酸と水酸化カルシウムの中和", ["HCl", "Ca(OH)2"], ["CaCl2", "H2O"], [2, 1, 1, 2]),
+    P_("水酸化ナトリウムと二酸化炭素", ["NaOH", "CO2"], ["Na2CO3", "H2O"], [2, 1, 1, 1]),
+    P_("テルミット反応", ["Fe2O3", "Al"], ["Al2O3", "Fe"], [1, 2, 1, 2]),
   ],
   [ // 中級
-    P("プロパンの燃焼", ["C3H8", "O2"], ["CO2", "H2O"], [1, 5, 3, 4]),
-    P("エタンの燃焼", ["C2H6", "O2"], ["CO2", "H2O"], [2, 7, 4, 6]),
-    P("ブタンの燃焼", ["C4H10", "O2"], ["CO2", "H2O"], [2, 13, 8, 10]),
-    P("アセチレンの燃焼", ["C2H2", "O2"], ["CO2", "H2O"], [2, 5, 4, 2]),
-    P("メタノールの燃焼", ["CH3OH", "O2"], ["CO2", "H2O"], [2, 3, 2, 4]),
-    P("エタノールの燃焼", ["C2H5OH", "O2"], ["CO2", "H2O"], [1, 3, 2, 3]),
-    P("アルミニウムの酸化", ["Al", "O2"], ["Al2O3"], [4, 3, 2]),
-    P("鉄の酸化（赤さび）", ["Fe", "O2"], ["Fe2O3"], [4, 3, 2]),
-    P("黄リンの燃焼", ["P4", "O2"], ["P4O10"], [1, 5, 1]),
-    P("硫化水素の燃焼", ["H2S", "O2"], ["SO2", "H2O"], [2, 3, 2, 2]),
-    P("マグネシウムと二酸化炭素", ["Mg", "CO2"], ["MgO", "C"], [2, 1, 2, 1]),
-    P("亜鉛と塩酸", ["Zn", "HCl"], ["ZnCl2", "H2"], [1, 2, 1, 1]),
-    P("アルミニウムと塩酸", ["Al", "HCl"], ["AlCl3", "H2"], [2, 6, 2, 3]),
-    P("アルミニウムと希硫酸", ["Al", "H2SO4"], ["Al2(SO4)3", "H2"], [2, 3, 1, 3]),
-    P("アルミニウムと水酸化ナトリウム水溶液", ["Al", "NaOH", "H2O"], ["Na[Al(OH)4]", "H2"], [2, 2, 6, 2, 3]),
-    P("酸化アルミニウムと塩酸", ["Al2O3", "HCl"], ["AlCl3", "H2O"], [1, 6, 2, 3]),
-    P("酸化アルミニウムと水酸化ナトリウム水溶液", ["Al2O3", "NaOH", "H2O"], ["Na[Al(OH)4]"], [1, 2, 3, 2]),
-    P("酸化ナトリウムと水", ["Na2O", "H2O"], ["NaOH"], [1, 1, 2]),
-    P("炭酸水素ナトリウムの熱分解", ["NaHCO3"], ["Na2CO3", "H2O", "CO2"], [2, 1, 1, 1]),
-    P("石灰石と塩酸", ["CaCO3", "HCl"], ["CaCl2", "H2O", "CO2"], [1, 2, 1, 1, 1]),
-    P("炭酸ナトリウムと塩酸", ["Na2CO3", "HCl"], ["NaCl", "H2O", "CO2"], [1, 2, 2, 1, 1]),
-    P("アンモニアの発生（塩化アンモニウムと水酸化カルシウム）", ["NH4Cl", "Ca(OH)2"], ["CaCl2", "NH3", "H2O"], [2, 1, 1, 2, 2]),
-    P("アンモニアと硫酸", ["NH3", "H2SO4"], ["(NH4)2SO4"], [2, 1, 1]),
-    P("炭化カルシウムと水（アセチレンの発生）", ["CaC2", "H2O"], ["Ca(OH)2", "C2H2"], [1, 2, 1, 1]),
-    P("酸化鉄(III)の還元（溶鉱炉）", ["Fe2O3", "CO"], ["Fe", "CO2"], [1, 3, 2, 3]),
-    P("四酸化三鉄の還元", ["Fe3O4", "CO"], ["Fe", "CO2"], [1, 4, 3, 4]),
-    P("二酸化ケイ素と水酸化ナトリウム", ["SiO2", "NaOH"], ["Na2SiO3", "H2O"], [1, 2, 1, 1]),
+    P_("プロパンの燃焼", ["C3H8", "O2"], ["CO2", "H2O"], [1, 5, 3, 4]),
+    P_("エタンの燃焼", ["C2H6", "O2"], ["CO2", "H2O"], [2, 7, 4, 6]),
+    P_("アセチレンの燃焼", ["C2H2", "O2"], ["CO2", "H2O"], [2, 5, 4, 2]),
+    P_("メタノールの燃焼", ["CH3OH", "O2"], ["CO2", "H2O"], [2, 3, 2, 4]),
+    P_("エタノールの燃焼", ["C2H5OH", "O2"], ["CO2", "H2O"], [1, 3, 2, 3]),
+    P_("アルミニウムの酸化", ["Al", "O2"], ["Al2O3"], [4, 3, 2]),
+    P_("鉄の酸化（赤さび）", ["Fe", "O2"], ["Fe2O3"], [4, 3, 2]),
+    P_("黄リンの燃焼", ["P4", "O2"], ["P4O10"], [1, 5, 1]),
+    P_("硫化水素の燃焼", ["H2S", "O2"], ["SO2", "H2O"], [2, 3, 2, 2]),
+    P_("マグネシウムと二酸化炭素", ["Mg", "CO2"], ["MgO", "C"], [2, 1, 2, 1]),
+    P_("亜鉛と塩酸", ["Zn", "HCl"], ["ZnCl2", "H2"], [1, 2, 1, 1]),
+    P_("アルミニウムと塩酸", ["Al", "HCl"], ["AlCl3", "H2"], [2, 6, 2, 3]),
+    P_("アルミニウムと希硫酸", ["Al", "H2SO4"], ["Al2(SO4)3", "H2"], [2, 3, 1, 3]),
+    P_("アルミニウムと水酸化ナトリウム水溶液", ["Al", "NaOH", "H2O"], ["Na[Al(OH)4]", "H2"], [2, 2, 6, 2, 3]),
+    P_("酸化アルミニウムと塩酸", ["Al2O3", "HCl"], ["AlCl3", "H2O"], [1, 6, 2, 3]),
+    P_("酸化アルミニウムと水酸化ナトリウム水溶液", ["Al2O3", "NaOH", "H2O"], ["Na[Al(OH)4]"], [1, 2, 3, 2]),
+    P_("酸化ナトリウムと水", ["Na2O", "H2O"], ["NaOH"], [1, 1, 2]),
+    P_("炭酸水素ナトリウムの熱分解", ["NaHCO3"], ["Na2CO3", "H2O", "CO2"], [2, 1, 1, 1]),
+    P_("石灰石と塩酸", ["CaCO3", "HCl"], ["CaCl2", "H2O", "CO2"], [1, 2, 1, 1, 1]),
+    P_("炭酸ナトリウムと塩酸", ["Na2CO3", "HCl"], ["NaCl", "H2O", "CO2"], [1, 2, 2, 1, 1]),
+    P_("アンモニアの発生（塩化アンモニウムと水酸化カルシウム）", ["NH4Cl", "Ca(OH)2"], ["CaCl2", "NH3", "H2O"], [2, 1, 1, 2, 2]),
+    P_("アンモニアと硫酸", ["NH3", "H2SO4"], ["(NH4)2SO4"], [2, 1, 1]),
+    P_("炭化カルシウムと水（アセチレンの発生）", ["CaC2", "H2O"], ["Ca(OH)2", "C2H2"], [1, 2, 1, 1]),
+    P_("酸化鉄(III)の還元（溶鉱炉）", ["Fe2O3", "CO"], ["Fe", "CO2"], [1, 3, 2, 3]),
+    P_("四酸化三鉄の還元", ["Fe3O4", "CO"], ["Fe", "CO2"], [1, 4, 3, 4]),
+    P_("二酸化ケイ素と水酸化ナトリウム", ["SiO2", "NaOH"], ["Na2SiO3", "H2O"], [1, 2, 1, 1]),
   ],
   [ // 上級
-    P("アンモニアの酸化（オストワルト法）", ["NH3", "O2"], ["NO", "H2O"], [4, 5, 4, 6]),
-    P("二酸化窒素と水（オストワルト法）", ["NO2", "H2O"], ["HNO3", "NO"], [3, 1, 2, 1]),
-    P("グルコースの燃焼", ["C6H12O6", "O2"], ["CO2", "H2O"], [1, 6, 6, 6]),
-    P("スクロースの燃焼", ["C12H22O11", "O2"], ["CO2", "H2O"], [1, 12, 12, 11]),
-    P("ベンゼンの燃焼", ["C6H6", "O2"], ["CO2", "H2O"], [2, 15, 12, 6]),
-    P("黄鉄鉱の燃焼", ["FeS2", "O2"], ["Fe2O3", "SO2"], [4, 11, 2, 8]),
-    P("テルミット反応", ["Fe2O3", "Al"], ["Al2O3", "Fe"], [1, 2, 1, 2]),
-    P("酸化マンガン(IV)と濃塩酸", ["MnO2", "HCl"], ["MnCl2", "Cl2", "H2O"], [1, 4, 1, 1, 2]),
-    P("さらし粉と塩酸", ["Ca(ClO)2", "HCl"], ["CaCl2", "Cl2", "H2O"], [1, 4, 1, 2, 2]),
-    P("塩素と水酸化ナトリウム", ["Cl2", "NaOH"], ["NaCl", "NaClO", "H2O"], [1, 2, 1, 1, 1]),
-    P("銅と希硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO", "H2O"], [3, 8, 3, 2, 4]),
-    P("銅と濃硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO2", "H2O"], [1, 4, 1, 2, 2]),
-    P("銀と希硝酸", ["Ag", "HNO3"], ["AgNO3", "NO", "H2O"], [3, 4, 3, 1, 2]),
-    P("銀と濃硝酸", ["Ag", "HNO3"], ["AgNO3", "NO2", "H2O"], [1, 2, 1, 1, 1]),
-    P("銅と熱濃硫酸", ["Cu", "H2SO4"], ["CuSO4", "SO2", "H2O"], [1, 2, 1, 1, 2]),
-    P("二酸化硫黄と硫化水素", ["SO2", "H2S"], ["S", "H2O"], [1, 2, 3, 2]),
-    P("過マンガン酸カリウムと塩酸", ["KMnO4", "HCl"], ["KCl", "MnCl2", "H2O", "Cl2"], [2, 16, 2, 2, 8, 5]),
-    P("過マンガン酸カリウムと硫酸鉄(II)", ["KMnO4", "FeSO4", "H2SO4"], ["K2SO4", "MnSO4", "Fe2(SO4)3", "H2O"], [2, 10, 8, 1, 2, 5, 8]),
-    P("過マンガン酸カリウムとシュウ酸", ["KMnO4", "(COOH)2", "H2SO4"], ["K2SO4", "MnSO4", "CO2", "H2O"], [2, 5, 3, 1, 2, 10, 8]),
-    P("過マンガン酸カリウムと二酸化硫黄", ["KMnO4", "SO2", "H2O"], ["K2SO4", "MnSO4", "H2SO4"], [2, 5, 2, 1, 2, 2]),
-    P("二クロム酸カリウムと硫酸鉄(II)", ["K2Cr2O7", "FeSO4", "H2SO4"], ["K2SO4", "Cr2(SO4)3", "Fe2(SO4)3", "H2O"], [1, 6, 7, 1, 1, 3, 7]),
-    P("ヨウ化カリウムと過酸化水素", ["KI", "H2O2", "H2SO4"], ["K2SO4", "I2", "H2O"], [2, 1, 1, 1, 1, 2]),
-    P("チオ硫酸ナトリウムとヨウ素（ヨウ素滴定）", ["Na2S2O3", "I2"], ["Na2S4O6", "NaI"], [2, 1, 1, 2]),
-    P("リン酸カルシウムと硫酸", ["Ca3(PO4)2", "H2SO4"], ["CaSO4", "H3PO4"], [1, 3, 3, 2]),
-    P("二酸化ケイ素とフッ化水素酸", ["SiO2", "HF"], ["H2SiF6", "H2O"], [1, 6, 1, 2]),
+    P_("ブタンの燃焼", ["C4H10", "O2"], ["CO2", "H2O"], [2, 13, 8, 10]),
+    P_("アンモニアの酸化（オストワルト法）", ["NH3", "O2"], ["NO", "H2O"], [4, 5, 4, 6]),
+    P_("二酸化窒素と水（オストワルト法）", ["NO2", "H2O"], ["HNO3", "NO"], [3, 1, 2, 1]),
+    P_("グルコースの燃焼", ["C6H12O6", "O2"], ["CO2", "H2O"], [1, 6, 6, 6]),
+    P_("スクロースの燃焼", ["C12H22O11", "O2"], ["CO2", "H2O"], [1, 12, 12, 11]),
+    P_("ベンゼンの燃焼", ["C6H6", "O2"], ["CO2", "H2O"], [2, 15, 12, 6]),
+    P_("黄鉄鉱の燃焼", ["FeS2", "O2"], ["Fe2O3", "SO2"], [4, 11, 2, 8]),
+    P_("酸化マンガン(IV)と濃塩酸", ["MnO2", "HCl"], ["MnCl2", "Cl2", "H2O"], [1, 4, 1, 1, 2]),
+    P_("さらし粉と塩酸", ["Ca(ClO)2", "HCl"], ["CaCl2", "Cl2", "H2O"], [1, 4, 1, 2, 2]),
+    P_("塩素と水酸化ナトリウム", ["Cl2", "NaOH"], ["NaCl", "NaClO", "H2O"], [1, 2, 1, 1, 1]),
+    P_("銅と希硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO", "H2O"], [3, 8, 3, 2, 4]),
+    P_("銅と濃硝酸", ["Cu", "HNO3"], ["Cu(NO3)2", "NO2", "H2O"], [1, 4, 1, 2, 2]),
+    P_("銀と希硝酸", ["Ag", "HNO3"], ["AgNO3", "NO", "H2O"], [3, 4, 3, 1, 2]),
+    P_("銀と濃硝酸", ["Ag", "HNO3"], ["AgNO3", "NO2", "H2O"], [1, 2, 1, 1, 1]),
+    P_("銅と熱濃硫酸", ["Cu", "H2SO4"], ["CuSO4", "SO2", "H2O"], [1, 2, 1, 1, 2]),
+    P_("二酸化硫黄と硫化水素", ["SO2", "H2S"], ["S", "H2O"], [1, 2, 3, 2]),
+    P_("過マンガン酸カリウムと塩酸", ["KMnO4", "HCl"], ["KCl", "MnCl2", "H2O", "Cl2"], [2, 16, 2, 2, 8, 5]),
+    P_("過マンガン酸カリウムと硫酸鉄(II)", ["KMnO4", "FeSO4", "H2SO4"], ["K2SO4", "MnSO4", "Fe2(SO4)3", "H2O"], [2, 10, 8, 1, 2, 5, 8]),
+    P_("過マンガン酸カリウムとシュウ酸", ["KMnO4", "(COOH)2", "H2SO4"], ["K2SO4", "MnSO4", "CO2", "H2O"], [2, 5, 3, 1, 2, 10, 8]),
+    P_("過マンガン酸カリウムと二酸化硫黄", ["KMnO4", "SO2", "H2O"], ["K2SO4", "MnSO4", "H2SO4"], [2, 5, 2, 1, 2, 2]),
+    P_("二クロム酸カリウムと硫酸鉄(II)", ["K2Cr2O7", "FeSO4", "H2SO4"], ["K2SO4", "Cr2(SO4)3", "Fe2(SO4)3", "H2O"], [1, 6, 7, 1, 1, 3, 7]),
+    P_("ヨウ化カリウムと過酸化水素", ["KI", "H2O2", "H2SO4"], ["K2SO4", "I2", "H2O"], [2, 1, 1, 1, 1, 2]),
+    P_("チオ硫酸ナトリウムとヨウ素（ヨウ素滴定）", ["Na2S2O3", "I2"], ["Na2S4O6", "NaI"], [2, 1, 1, 2]),
+    P_("リン酸カルシウムと硫酸", ["Ca3(PO4)2", "H2SO4"], ["CaSO4", "H3PO4"], [1, 3, 3, 2]),
+    P_("二酸化ケイ素とフッ化水素酸", ["SiO2", "HF"], ["H2SiF6", "H2O"], [1, 6, 1, 2]),
   ],
 ];
-const I = (name, L, R, a) => ({ name, L, R, a, ion: true });
+const I_ = (name, L, R, a) => ({ name, L, R, a, ion: true });
 const ION_PROBLEMS = [
   [ // 初級
-    I("亜鉛と酸（イオン反応式）", ["Zn", "H^+"], ["Zn^2+", "H2"], [1, 2, 1, 1]),
-    I("マグネシウムと酸（イオン反応式）", ["Mg", "H^+"], ["Mg^2+", "H2"], [1, 2, 1, 1]),
-    I("鉄と酸（イオン反応式）", ["Fe", "H^+"], ["Fe^2+", "H2"], [1, 2, 1, 1]),
-    I("銅と銀イオン（金属のイオン化傾向）", ["Cu", "Ag^+"], ["Cu^2+", "Ag"], [1, 2, 1, 2]),
-    I("ナトリウムと水（イオン反応式）", ["Na", "H2O"], ["Na^+", "OH^-", "H2"], [2, 2, 2, 2, 1]),
-    I("水酸化銅(II)の沈殿", ["Cu^2+", "OH^-"], ["Cu(OH)2"], [1, 2, 1]),
-    I("水酸化鉄(III)の沈殿", ["Fe^3+", "OH^-"], ["Fe(OH)3"], [1, 3, 1]),
-    I("水酸化アルミニウムの沈殿", ["Al^3+", "OH^-"], ["Al(OH)3"], [1, 3, 1]),
-    I("ヨウ化鉛(II)の沈殿", ["Pb^2+", "I^-"], ["PbI2"], [1, 2, 1]),
-    I("塩化鉛(II)の沈殿", ["Pb^2+", "Cl^-"], ["PbCl2"], [1, 2, 1]),
-    I("クロム酸銀の沈殿", ["Ag^+", "CrO4^2-"], ["Ag2CrO4"], [2, 1, 1]),
-    I("炭酸イオンと酸", ["CO3^2-", "H^+"], ["H2O", "CO2"], [1, 2, 1, 1]),
+    I_("亜鉛と酸（イオン反応式）", ["Zn", "H^+"], ["Zn^2+", "H2"], [1, 2, 1, 1]),
+    I_("マグネシウムと酸（イオン反応式）", ["Mg", "H^+"], ["Mg^2+", "H2"], [1, 2, 1, 1]),
+    I_("鉄と酸（イオン反応式）", ["Fe", "H^+"], ["Fe^2+", "H2"], [1, 2, 1, 1]),
+    I_("銅と銀イオン（金属のイオン化傾向）", ["Cu", "Ag^+"], ["Cu^2+", "Ag"], [1, 2, 1, 2]),
+    I_("ナトリウムと水（イオン反応式）", ["Na", "H2O"], ["Na^+", "OH^-", "H2"], [2, 2, 2, 2, 1]),
+    I_("水酸化銅(II)の沈殿", ["Cu^2+", "OH^-"], ["Cu(OH)2"], [1, 2, 1]),
+    I_("水酸化アルミニウムの沈殿", ["Al^3+", "OH^-"], ["Al(OH)3"], [1, 3, 1]),
+    I_("ヨウ化鉛(II)の沈殿", ["Pb^2+", "I^-"], ["PbI2"], [1, 2, 1]),
+    I_("塩化鉛(II)の沈殿", ["Pb^2+", "Cl^-"], ["PbCl2"], [1, 2, 1]),
+    I_("クロム酸銀の沈殿", ["Ag^+", "CrO4^2-"], ["Ag2CrO4"], [2, 1, 1]),
+    I_("炭酸イオンと酸", ["CO3^2-", "H^+"], ["H2O", "CO2"], [1, 2, 1, 1]),
   ],
   [ // 中級
-    I("アルミニウムと酸（イオン反応式）", ["Al", "H^+"], ["Al^3+", "H2"], [2, 6, 2, 3]),
-    I("アルミニウムと銅(II)イオン", ["Al", "Cu^2+"], ["Al^3+", "Cu"], [2, 3, 2, 3]),
-    I("石灰石と酸（イオン反応式）", ["CaCO3", "H^+"], ["Ca^2+", "H2O", "CO2"], [1, 2, 1, 1, 1]),
-    I("塩素とヨウ化物イオン", ["Cl2", "I^-"], ["Cl^-", "I2"], [1, 2, 2, 1]),
-    I("塩素と臭化物イオン", ["Cl2", "Br^-"], ["Cl^-", "Br2"], [1, 2, 2, 1]),
-    I("鉄(III)イオンとヨウ化物イオン", ["Fe^3+", "I^-"], ["Fe^2+", "I2"], [2, 2, 2, 1]),
-    I("鉄(II)イオンと塩素", ["Fe^2+", "Cl2"], ["Fe^3+", "Cl^-"], [2, 1, 2, 2]),
-    I("スズ(II)イオンと鉄(III)イオン", ["Sn^2+", "Fe^3+"], ["Sn^4+", "Fe^2+"], [1, 2, 1, 2]),
-    I("チオ硫酸イオンとヨウ素", ["S2O3^2-", "I2"], ["S4O6^2-", "I^-"], [2, 1, 1, 2]),
-    I("クロム酸イオンと酸", ["CrO4^2-", "H^+"], ["Cr2O7^2-", "H2O"], [2, 2, 1, 1]),
-    I("アルミニウムと強塩基（イオン反応式）", ["Al", "OH^-", "H2O"], ["[Al(OH)4]^-", "H2"], [2, 2, 6, 2, 3]),
-    I("亜鉛と強塩基（イオン反応式）", ["Zn", "OH^-", "H2O"], ["[Zn(OH)4]^2-", "H2"], [1, 2, 2, 1, 1]),
-    I("水酸化亜鉛と強塩基", ["Zn(OH)2", "OH^-"], ["[Zn(OH)4]^2-"], [1, 2, 1]),
-    I("水酸化銅(II)とアンモニア水", ["Cu(OH)2", "NH3"], ["[Cu(NH3)4]^2+", "OH^-"], [1, 4, 1, 2]),
-    I("塩化銀とアンモニア水", ["AgCl", "NH3"], ["[Ag(NH3)2]^+", "Cl^-"], [1, 2, 1, 1]),
-    I("酸化銀とアンモニア水", ["Ag2O", "NH3", "H2O"], ["[Ag(NH3)2]^+", "OH^-"], [1, 4, 1, 2, 2]),
+    I_("アルミニウムと酸（イオン反応式）", ["Al", "H^+"], ["Al^3+", "H2"], [2, 6, 2, 3]),
+    I_("アルミニウムと銅(II)イオン", ["Al", "Cu^2+"], ["Al^3+", "Cu"], [2, 3, 2, 3]),
+    I_("石灰石と酸（イオン反応式）", ["CaCO3", "H^+"], ["Ca^2+", "H2O", "CO2"], [1, 2, 1, 1, 1]),
+    I_("塩素とヨウ化物イオン", ["Cl2", "I^-"], ["Cl^-", "I2"], [1, 2, 2, 1]),
+    I_("塩素と臭化物イオン", ["Cl2", "Br^-"], ["Cl^-", "Br2"], [1, 2, 2, 1]),
+    I_("鉄(III)イオンとヨウ化物イオン", ["Fe^3+", "I^-"], ["Fe^2+", "I2"], [2, 2, 2, 1]),
+    I_("鉄(II)イオンと塩素", ["Fe^2+", "Cl2"], ["Fe^3+", "Cl^-"], [2, 1, 2, 2]),
+    I_("スズ(II)イオンと鉄(III)イオン", ["Sn^2+", "Fe^3+"], ["Sn^4+", "Fe^2+"], [1, 2, 1, 2]),
+    I_("チオ硫酸イオンとヨウ素", ["S2O3^2-", "I2"], ["S4O6^2-", "I^-"], [2, 1, 1, 2]),
+    I_("クロム酸イオンと酸", ["CrO4^2-", "H^+"], ["Cr2O7^2-", "H2O"], [2, 2, 1, 1]),
+    I_("アルミニウムと強塩基（イオン反応式）", ["Al", "OH^-", "H2O"], ["[Al(OH)4]^-", "H2"], [2, 2, 6, 2, 3]),
+    I_("亜鉛と強塩基（イオン反応式）", ["Zn", "OH^-", "H2O"], ["[Zn(OH)4]^2-", "H2"], [1, 2, 2, 1, 1]),
+    I_("水酸化亜鉛と強塩基", ["Zn(OH)2", "OH^-"], ["[Zn(OH)4]^2-"], [1, 2, 1]),
+    I_("水酸化銅(II)とアンモニア水", ["Cu(OH)2", "NH3"], ["[Cu(NH3)4]^2+", "OH^-"], [1, 4, 1, 2]),
+    I_("塩化銀とアンモニア水", ["AgCl", "NH3"], ["[Ag(NH3)2]^+", "Cl^-"], [1, 2, 1, 1]),
+    I_("酸化銀とアンモニア水", ["Ag2O", "NH3", "H2O"], ["[Ag(NH3)2]^+", "OH^-"], [1, 4, 1, 2, 2]),
   ],
   [ // 上級
-    I("半反応式：過マンガン酸イオン（酸性）", ["MnO4^-", "H^+", "e^-"], ["Mn^2+", "H2O"], [1, 8, 5, 1, 4]),
-    I("半反応式：過マンガン酸イオン（中性・塩基性）", ["MnO4^-", "H2O", "e^-"], ["MnO2", "OH^-"], [1, 2, 3, 1, 4]),
-    I("半反応式：二クロム酸イオン", ["Cr2O7^2-", "H^+", "e^-"], ["Cr^3+", "H2O"], [1, 14, 6, 2, 7]),
-    I("半反応式：過酸化水素（酸化剤）", ["H2O2", "H^+", "e^-"], ["H2O"], [1, 2, 2, 2]),
-    I("半反応式：過酸化水素（還元剤）", ["H2O2"], ["O2", "H^+", "e^-"], [1, 1, 2, 2]),
-    I("半反応式：シュウ酸", ["(COOH)2"], ["CO2", "H^+", "e^-"], [1, 2, 2, 2]),
-    I("半反応式：二酸化硫黄（還元剤）", ["SO2", "H2O"], ["SO4^2-", "H^+", "e^-"], [1, 2, 1, 4, 2]),
-    I("半反応式：二酸化硫黄（酸化剤）", ["SO2", "H^+", "e^-"], ["S", "H2O"], [1, 4, 4, 1, 2]),
-    I("半反応式：希硝酸", ["HNO3", "H^+", "e^-"], ["NO", "H2O"], [1, 3, 3, 1, 2]),
-    I("半反応式：スズ(II)イオン", ["Sn^2+"], ["Sn^4+", "e^-"], [1, 1, 2]),
-    I("半反応式：ヨウ化物イオン", ["I^-"], ["I2", "e^-"], [2, 1, 2]),
-    I("過マンガン酸イオンと鉄(II)イオン", ["MnO4^-", "Fe^2+", "H^+"], ["Mn^2+", "Fe^3+", "H2O"], [1, 5, 8, 1, 5, 4]),
-    I("過マンガン酸イオンとシュウ酸", ["MnO4^-", "(COOH)2", "H^+"], ["Mn^2+", "CO2", "H2O"], [2, 5, 6, 2, 10, 8]),
-    I("過マンガン酸イオンとヨウ化物イオン", ["MnO4^-", "I^-", "H^+"], ["Mn^2+", "I2", "H2O"], [2, 10, 16, 2, 5, 8]),
-    I("過マンガン酸イオンと二酸化硫黄", ["MnO4^-", "SO2", "H2O"], ["Mn^2+", "SO4^2-", "H^+"], [2, 5, 2, 2, 5, 4]),
-    I("二クロム酸イオンと鉄(II)イオン", ["Cr2O7^2-", "Fe^2+", "H^+"], ["Cr^3+", "Fe^3+", "H2O"], [1, 6, 14, 2, 6, 7]),
-    I("二クロム酸イオンとヨウ化物イオン", ["Cr2O7^2-", "I^-", "H^+"], ["Cr^3+", "I2", "H2O"], [1, 6, 14, 2, 3, 7]),
-    I("過酸化水素とヨウ化物イオン", ["H2O2", "I^-", "H^+"], ["I2", "H2O"], [1, 2, 2, 1, 2]),
-    I("銅と希硝酸（イオン反応式）", ["Cu", "NO3^-", "H^+"], ["Cu^2+", "NO", "H2O"], [3, 2, 8, 3, 2, 4]),
+    I_("半反応式：過マンガン酸イオン（酸性）", ["MnO4^-", "H^+", "e^-"], ["Mn^2+", "H2O"], [1, 8, 5, 1, 4]),
+    I_("半反応式：過マンガン酸イオン（中性・塩基性）", ["MnO4^-", "H2O", "e^-"], ["MnO2", "OH^-"], [1, 2, 3, 1, 4]),
+    I_("半反応式：二クロム酸イオン", ["Cr2O7^2-", "H^+", "e^-"], ["Cr^3+", "H2O"], [1, 14, 6, 2, 7]),
+    I_("半反応式：過酸化水素（酸化剤）", ["H2O2", "H^+", "e^-"], ["H2O"], [1, 2, 2, 2]),
+    I_("半反応式：過酸化水素（還元剤）", ["H2O2"], ["O2", "H^+", "e^-"], [1, 1, 2, 2]),
+    I_("半反応式：シュウ酸", ["(COOH)2"], ["CO2", "H^+", "e^-"], [1, 2, 2, 2]),
+    I_("半反応式：二酸化硫黄（還元剤）", ["SO2", "H2O"], ["SO4^2-", "H^+", "e^-"], [1, 2, 1, 4, 2]),
+    I_("半反応式：二酸化硫黄（酸化剤）", ["SO2", "H^+", "e^-"], ["S", "H2O"], [1, 4, 4, 1, 2]),
+    I_("半反応式：希硝酸", ["HNO3", "H^+", "e^-"], ["NO", "H2O"], [1, 3, 3, 1, 2]),
+    I_("半反応式：スズ(II)イオン", ["Sn^2+"], ["Sn^4+", "e^-"], [1, 1, 2]),
+    I_("半反応式：ヨウ化物イオン", ["I^-"], ["I2", "e^-"], [2, 1, 2]),
+    I_("過マンガン酸イオンと鉄(II)イオン", ["MnO4^-", "Fe^2+", "H^+"], ["Mn^2+", "Fe^3+", "H2O"], [1, 5, 8, 1, 5, 4]),
+    I_("過マンガン酸イオンとシュウ酸", ["MnO4^-", "(COOH)2", "H^+"], ["Mn^2+", "CO2", "H2O"], [2, 5, 6, 2, 10, 8]),
+    I_("過マンガン酸イオンとヨウ化物イオン", ["MnO4^-", "I^-", "H^+"], ["Mn^2+", "I2", "H2O"], [2, 10, 16, 2, 5, 8]),
+    I_("過マンガン酸イオンと二酸化硫黄", ["MnO4^-", "SO2", "H2O"], ["Mn^2+", "SO4^2-", "H^+"], [2, 5, 2, 2, 5, 4]),
+    I_("二クロム酸イオンと鉄(II)イオン", ["Cr2O7^2-", "Fe^2+", "H^+"], ["Cr^3+", "Fe^3+", "H2O"], [1, 6, 14, 2, 6, 7]),
+    I_("二クロム酸イオンとヨウ化物イオン", ["Cr2O7^2-", "I^-", "H^+"], ["Cr^3+", "I2", "H2O"], [1, 6, 14, 2, 3, 7]),
+    I_("過酸化水素とヨウ化物イオン", ["H2O2", "I^-", "H^+"], ["I2", "H2O"], [1, 2, 2, 1, 2]),
+    I_("銅と希硝酸（イオン反応式）", ["Cu", "NO3^-", "H^+"], ["Cu^2+", "NO", "H2O"], [3, 2, 8, 3, 2, 4]),
   ],
 ];
 const MAX = 20, MIN = 1;
 const LV_NAME = ["初級", "中級", "上級"];
+// 一覧と付せんのための番号（並びを変えないかぎり同じ id になる）
+// 化学反応式100本ノックから追加した問題（もとからある問題と同じ反応と、係数が20をこえる (18)オクタン・(20)デカンの燃焼は除く）
+// レベルの決め方（追加分）：電子 e⁻ をふくむ／★難問／係数の合計15以上／物質6つ以上 → 上級、係数の合計9以上／物質5つ以上／係数5以上 → 中級、それ以外 → 初級
+const KNOCK_ADD = [
+  { n: 2, lv: 0, ion: false, name: "炭素の燃焼（完全燃焼）", L: ["C","O2"], R: ["CO2"], a: [1,1,1] },
+  { n: 3, lv: 0, ion: false, name: "炭素の不完全燃焼", L: ["C","O2"], R: ["CO"], a: [2,1,2] },
+  { n: 8, lv: 0, ion: false, name: "酸化カルシウムと水", L: ["CaO","H2O"], R: ["Ca(OH)2"], a: [1,1,1] },
+  { n: 10, lv: 0, ion: false, name: "炭素と水素からメタンの生成", L: ["C","H2"], R: ["CH4"], a: [1,2,1] },
+  { n: 15, lv: 2, ion: false, name: "ペンタンの燃焼", L: ["C5H12","O2"], R: ["CO2","H2O"], a: [1,8,5,6] },
+  { n: 16, lv: 2, ion: false, name: "ヘキサンの燃焼", L: ["C6H14","O2"], R: ["CO2","H2O"], a: [2,19,12,14] },
+  { n: 17, lv: 2, ion: false, name: "ヘプタンの燃焼", L: ["C7H16","O2"], R: ["CO2","H2O"], a: [1,11,7,8] },
+  { n: 19, lv: 2, ion: false, name: "ノナンの燃焼", L: ["C9H20","O2"], R: ["CO2","H2O"], a: [1,14,9,10] },
+  { n: 26, lv: 0, ion: false, name: "亜鉛と希硫酸", L: ["Zn","H2SO4"], R: ["ZnSO4","H2"], a: [1,1,1,1] },
+  { n: 30, lv: 1, ion: false, name: "銀と熱濃硫酸", L: ["Ag","H2SO4"], R: ["Ag2SO4","SO2","H2O"], a: [2,2,1,1,2] },
+  { n: 35, lv: 0, ion: false, name: "炭酸カルシウムの熱分解", L: ["CaCO3"], R: ["CaO","CO2"], a: [1,1,1] },
+  { n: 36, lv: 0, ion: false, name: "塩素と臭化水素", L: ["Cl2","HBr"], R: ["Br2","HCl"], a: [1,2,1,2] },
+  { n: 37, lv: 0, ion: false, name: "塩酸と水酸化カリウムの中和", L: ["HCl","KOH"], R: ["KCl","H2O"], a: [1,1,1,1] },
+  { n: 38, lv: 0, ion: false, name: "塩酸と水酸化バリウムの中和", L: ["HCl","Ba(OH)2"], R: ["BaCl2","H2O"], a: [2,1,1,2] },
+  { n: 39, lv: 0, ion: false, name: "硝酸と水酸化カルシウムの中和", L: ["HNO3","Ca(OH)2"], R: ["Ca(NO3)2","H2O"], a: [2,1,1,2] },
+  { n: 41, lv: 0, ion: false, name: "塩化水素とアンモニア", L: ["HCl","NH3"], R: ["NH4Cl"], a: [1,1,1] },
+  { n: 42, lv: 0, ion: false, name: "硝酸とアンモニア", L: ["HNO3","NH3"], R: ["NH4NO3"], a: [1,1,1] },
+  { n: 44, lv: 0, ion: false, name: "酢酸と水酸化ナトリウムの中和", L: ["CH3COOH","NaOH"], R: ["CH3COONa","H2O"], a: [1,1,1,1] },
+  { n: 45, lv: 0, ion: false, name: "酢酸と水酸化カルシウムの中和", L: ["CH3COOH","Ca(OH)2"], R: ["(CH3COO)2Ca","H2O"], a: [2,1,1,2] },
+  { n: 48, lv: 0, ion: false, name: "酸化鉄(III)の還元（四酸化三鉄ができる）", L: ["Fe2O3","CO"], R: ["Fe3O4","CO2"], a: [3,1,2,1] },
+  { n: 49, lv: 0, ion: false, name: "四酸化三鉄の還元（酸化鉄(II)ができる）", L: ["Fe3O4","CO"], R: ["FeO","CO2"], a: [1,1,3,1] },
+  { n: 50, lv: 0, ion: false, name: "酸化鉄(II)の還元", L: ["FeO","CO"], R: ["Fe","CO2"], a: [1,1,1,1] },
+  { n: 58, lv: 1, ion: false, name: "臭化水素の酸化", L: ["HBr","O2"], R: ["Br2","H2O"], a: [4,1,2,2] },
+  { n: 60, lv: 0, ion: false, name: "酸素からオゾンの生成", L: ["O2"], R: ["O3"], a: [3,2] },
+  { n: 61, lv: 0, ion: false, name: "酸化亜鉛と希硫酸", L: ["ZnO","H2SO4"], R: ["ZnSO4","H2O"], a: [1,1,1,1] },
+  { n: 63, lv: 1, ion: false, name: "リンの燃焼", L: ["P","O2"], R: ["P4O10"], a: [4,5,1] },
+  { n: 64, lv: 1, ion: false, name: "十酸化四リンと水", L: ["P4O10","H2O"], R: ["H3PO4"], a: [1,6,4] },
+  { n: 65, lv: 0, ion: false, name: "リン酸カルシウムと硫酸（過リン酸石灰）", L: ["Ca3(PO4)2","H2SO4"], R: ["Ca(H2PO4)2","CaSO4"], a: [1,2,1,2] },
+  { n: 66, lv: 0, ion: false, name: "二酸化ケイ素とフッ化水素", L: ["SiO2","HF"], R: ["SiF4","H2O"], a: [1,4,1,2] },
+  { n: 67, lv: 0, ion: false, name: "二酸化ケイ素の炭素による還元", L: ["SiO2","C"], R: ["Si","CO"], a: [1,2,1,2] },
+  { n: 70, lv: 0, ion: false, name: "亜硝酸アンモニウムの分解", L: ["NH4NO2"], R: ["N2","H2O"], a: [1,1,2] },
+  { n: 71, lv: 0, ion: true, name: "塩化銀の沈殿", L: ["Ag^+","Cl^-"], R: ["AgCl"], a: [1,1,1] },
+  { n: 73, lv: 0, ion: true, name: "水素イオンと硫化物イオン", L: ["H^+","S^2-"], R: ["H2S"], a: [2,1,1] },
+  { n: 74, lv: 0, ion: true, name: "硫酸カルシウムの沈殿", L: ["Ca^2+","SO4^2-"], R: ["CaSO4"], a: [1,1,1] },
+  { n: 75, lv: 0, ion: true, name: "硫酸銀の沈殿", L: ["Ag^+","SO4^2-"], R: ["Ag2SO4"], a: [2,1,1] },
+  { n: 76, lv: 0, ion: true, name: "水酸化鉄(II)の沈殿", L: ["Fe^2+","OH^-"], R: ["Fe(OH)2"], a: [1,2,1] },
+  { n: 78, lv: 0, ion: true, name: "塩化マグネシウムの電離", L: ["MgCl2"], R: ["Mg^2+","Cl^-"], a: [1,1,2] },
+  { n: 80, lv: 0, ion: true, name: "亜鉛と銅(II)イオン", L: ["Zn","Cu^2+"], R: ["Zn^2+","Cu"], a: [1,1,1,1] },
+  { n: 81, lv: 0, ion: true, name: "亜鉛と銀イオン", L: ["Zn","Ag^+"], R: ["Zn^2+","Ag"], a: [1,2,1,2] },
+  { n: 83, lv: 1, ion: true, name: "クロムと酸（イオン反応式）", L: ["Cr","H^+"], R: ["Cr^3+","H2"], a: [2,6,2,3] },
+  { n: 85, lv: 0, ion: true, name: "臭素とヨウ化物イオン", L: ["Br2","I^-"], R: ["Br^-","I2"], a: [1,2,2,1] },
+  { n: 86, lv: 0, ion: true, name: "硫酸の電離", L: ["H2SO4"], R: ["H^+","SO4^2-"], a: [1,2,1] },
+  { n: 87, lv: 0, ion: true, name: "硫酸の電離（1段階目）", L: ["H2SO4"], R: ["H^+","HSO4^-"], a: [1,1,1] },
+  { n: 88, lv: 2, ion: true, name: "半反応式：塩素", L: ["Cl2","e^-"], R: ["Cl^-"], a: [1,2,2] },
+  { n: 89, lv: 2, ion: true, name: "半反応式：水素イオン", L: ["H^+","e^-"], R: ["H2"], a: [2,2,1] },
+  { n: 98, lv: 2, ion: true, name: "銅と濃硝酸（イオン反応式）", L: ["Cu","NO3^-","H^+"], R: ["Cu^2+","NO2","H2O"], a: [1,2,4,1,2,2] },
+  { n: 99, lv: 2, ion: true, name: "過マンガン酸イオンと亜硫酸イオン", L: ["MnO4^-","SO3^2-","H^+"], R: ["Mn^2+","SO4^2-","H2O"], a: [2,5,6,2,5,3] },
+];
+// 以前の並び順の番号（付せん・記録の引き継ぎ用）
+const LEGACY_ID = {"r0-0":"H2+O2>H2O","r0-1":"H2O>H2+O2","r0-2":"N2+H2>NH3","r0-3":"H2+Cl2>HCl","r0-4":"Mg+O2>MgO","r0-5":"Cu+O2>CuO","r0-6":"Na+O2>Na2O","r0-7":"Fe+O2>Fe3O4","r0-8":"Na+Cl2>NaCl","r0-9":"CO+O2>CO2","r0-10":"NO+O2>NO2","r0-11":"SO2+O2>SO3","r0-12":"CH4+O2>CO2+H2O","r0-13":"C2H4+O2>CO2+H2O","r0-14":"H2O2>H2O+O2","r0-15":"KClO3>KCl+O2","r0-16":"Ag2O>Ag+O2","r0-17":"CuO+C>Cu+CO2","r0-18":"Na+H2O>NaOH+H2","r0-19":"Ca+H2O>Ca(OH)2+H2","r0-20":"Mg+HCl>MgCl2+H2","r0-21":"Fe+HCl>FeCl2+H2","r0-22":"H2SO4+NaOH>Na2SO4+H2O","r0-23":"HCl+Ca(OH)2>CaCl2+H2O","r0-24":"NaOH+CO2>Na2CO3+H2O","r1-0":"C3H8+O2>CO2+H2O","r1-1":"C2H6+O2>CO2+H2O","r1-2":"C4H10+O2>CO2+H2O","r1-3":"C2H2+O2>CO2+H2O","r1-4":"CH3OH+O2>CO2+H2O","r1-5":"C2H5OH+O2>CO2+H2O","r1-6":"Al+O2>Al2O3","r1-7":"Fe+O2>Fe2O3","r1-8":"P4+O2>P4O10","r1-9":"H2S+O2>SO2+H2O","r1-10":"Mg+CO2>MgO+C","r1-11":"Zn+HCl>ZnCl2+H2","r1-12":"Al+HCl>AlCl3+H2","r1-13":"Al+H2SO4>Al2(SO4)3+H2","r1-14":"Al+NaOH+H2O>Na[Al(OH)4]+H2","r1-15":"Al2O3+HCl>AlCl3+H2O","r1-16":"Al2O3+NaOH+H2O>Na[Al(OH)4]","r1-17":"Na2O+H2O>NaOH","r1-18":"NaHCO3>Na2CO3+H2O+CO2","r1-19":"CaCO3+HCl>CaCl2+H2O+CO2","r1-20":"Na2CO3+HCl>NaCl+H2O+CO2","r1-21":"NH4Cl+Ca(OH)2>CaCl2+NH3+H2O","r1-22":"NH3+H2SO4>(NH4)2SO4","r1-23":"CaC2+H2O>Ca(OH)2+C2H2","r1-24":"Fe2O3+CO>Fe+CO2","r1-25":"Fe3O4+CO>Fe+CO2","r1-26":"SiO2+NaOH>Na2SiO3+H2O","r2-0":"NH3+O2>NO+H2O","r2-1":"NO2+H2O>HNO3+NO","r2-2":"C6H12O6+O2>CO2+H2O","r2-3":"C12H22O11+O2>CO2+H2O","r2-4":"C6H6+O2>CO2+H2O","r2-5":"FeS2+O2>Fe2O3+SO2","r2-6":"Fe2O3+Al>Al2O3+Fe","r2-7":"MnO2+HCl>MnCl2+Cl2+H2O","r2-8":"Ca(ClO)2+HCl>CaCl2+Cl2+H2O","r2-9":"Cl2+NaOH>NaCl+NaClO+H2O","r2-10":"Cu+HNO3>Cu(NO3)2+NO+H2O","r2-11":"Cu+HNO3>Cu(NO3)2+NO2+H2O","r2-12":"Ag+HNO3>AgNO3+NO+H2O","r2-13":"Ag+HNO3>AgNO3+NO2+H2O","r2-14":"Cu+H2SO4>CuSO4+SO2+H2O","r2-15":"SO2+H2S>S+H2O","r2-16":"KMnO4+HCl>KCl+MnCl2+H2O+Cl2","r2-17":"KMnO4+FeSO4+H2SO4>K2SO4+MnSO4+Fe2(SO4)3+H2O","r2-18":"KMnO4+(COOH)2+H2SO4>K2SO4+MnSO4+CO2+H2O","r2-19":"KMnO4+SO2+H2O>K2SO4+MnSO4+H2SO4","r2-20":"K2Cr2O7+FeSO4+H2SO4>K2SO4+Cr2(SO4)3+Fe2(SO4)3+H2O","r2-21":"KI+H2O2+H2SO4>K2SO4+I2+H2O","r2-22":"Na2S2O3+I2>Na2S4O6+NaI","r2-23":"Ca3(PO4)2+H2SO4>CaSO4+H3PO4","r2-24":"SiO2+HF>H2SiF6+H2O","i0-0":"Zn+H^+>Zn^2++H2","i0-1":"Mg+H^+>Mg^2++H2","i0-2":"Fe+H^+>Fe^2++H2","i0-3":"Cu+Ag^+>Cu^2++Ag","i0-4":"Na+H2O>Na^++OH^-+H2","i0-5":"Cu^2++OH^->Cu(OH)2","i0-6":"Fe^3++OH^->Fe(OH)3","i0-7":"Al^3++OH^->Al(OH)3","i0-8":"Pb^2++I^->PbI2","i0-9":"Pb^2++Cl^->PbCl2","i0-10":"Ag^++CrO4^2->Ag2CrO4","i0-11":"CO3^2-+H^+>H2O+CO2","i1-0":"Al+H^+>Al^3++H2","i1-1":"Al+Cu^2+>Al^3++Cu","i1-2":"CaCO3+H^+>Ca^2++H2O+CO2","i1-3":"Cl2+I^->Cl^-+I2","i1-4":"Cl2+Br^->Cl^-+Br2","i1-5":"Fe^3++I^->Fe^2++I2","i1-6":"Fe^2++Cl2>Fe^3++Cl^-","i1-7":"Sn^2++Fe^3+>Sn^4++Fe^2+","i1-8":"S2O3^2-+I2>S4O6^2-+I^-","i1-9":"CrO4^2-+H^+>Cr2O7^2-+H2O","i1-10":"Al+OH^-+H2O>[Al(OH)4]^-+H2","i1-11":"Zn+OH^-+H2O>[Zn(OH)4]^2-+H2","i1-12":"Zn(OH)2+OH^->[Zn(OH)4]^2-","i1-13":"Cu(OH)2+NH3>[Cu(NH3)4]^2++OH^-","i1-14":"AgCl+NH3>[Ag(NH3)2]^++Cl^-","i1-15":"Ag2O+NH3+H2O>[Ag(NH3)2]^++OH^-","i2-0":"MnO4^-+H^++e^->Mn^2++H2O","i2-1":"MnO4^-+H2O+e^->MnO2+OH^-","i2-2":"Cr2O7^2-+H^++e^->Cr^3++H2O","i2-3":"H2O2+H^++e^->H2O","i2-4":"H2O2>O2+H^++e^-","i2-5":"(COOH)2>CO2+H^++e^-","i2-6":"SO2+H2O>SO4^2-+H^++e^-","i2-7":"SO2+H^++e^->S+H2O","i2-8":"HNO3+H^++e^->NO+H2O","i2-9":"Sn^2+>Sn^4++e^-","i2-10":"I^->I2+e^-","i2-11":"MnO4^-+Fe^2++H^+>Mn^2++Fe^3++H2O","i2-12":"MnO4^-+(COOH)2+H^+>Mn^2++CO2+H2O","i2-13":"MnO4^-+I^-+H^+>Mn^2++I2+H2O","i2-14":"MnO4^-+SO2+H2O>Mn^2++SO4^2-+H^+","i2-15":"Cr2O7^2-+Fe^2++H^+>Cr^3++Fe^3++H2O","i2-16":"Cr2O7^2-+I^-+H^+>Cr^3++I2+H2O","i2-17":"H2O2+I^-+H^+>I2+H2O","i2-18":"Cu+NO3^-+H^+>Cu^2++NO+H2O"};
+KNOCK_ADD.forEach(k => (k.ion ? ION_PROBLEMS : PROBLEMS)[k.lv].push({ name: k.name, L: k.L, R: k.R, a: k.a, ...(k.ion ? { ion: true } : {}) }));
+// id は反応式そのもの（並び順が変わっても付せん・記録が保たれる）
+const pid = p => p.L.join("+") + ">" + p.R.join("+");
+[PROBLEMS, ION_PROBLEMS].forEach(set => set.forEach((g, lv) => g.forEach(p => { p.id = pid(p); p.lv = lv; })));
+const ALL = [0, 1, 2].flatMap(lv => [...PROBLEMS[lv], ...ION_PROBLEMS[lv]]);
+const fixId = id => LEGACY_ID[id] || id;
 
-/* 化学式 → {元素: 個数}。() と [] に対応 */
+// 化学式 → {元素: 個数}。() と [] に対応
 function parseFormula(f) {
   let i = 0;
-  function num() { let s = ""; while (i < f.length && /\d/.test(f[i])) s += f[i++]; return s ? +s : 1; }
+  const num = () => { let s = ""; while (i < f.length && /\d/.test(f[i])) s += f[i++]; return s ? +s : 1; };
   function group() {
     const c = {};
     while (i < f.length && f[i] !== ")" && f[i] !== "]") {
@@ -486,7 +671,6 @@ function parseFormula(f) {
   }
   return group();
 }
-/* "SO4^2-" のように ^ の後ろを電荷として読む。電子は "e^-" */
 const CHARGE = "電荷";
 function parse(s) {
   const [f, ch] = s.split("^");
@@ -494,67 +678,475 @@ function parse(s) {
   if (ch) { const m = ch.match(/^(\d*)([+-])$/); c[CHARGE] = (m[1] ? +m[1] : 1) * (m[2] === "+" ? 1 : -1); }
   return c;
 }
-const fmt = s => {
-  const [f, ch] = s.split("^");
-  return f.replace(/(\d+)/g, "<sub>$1</sub>") + (ch ? `<sup>${ch.replace("-", "−")}</sup>` : "");
-};
+const fmt = s => { const [f, ch] = s.split("^"); return `<span class="chem">${f.replace(/(\d+)/g, "<sub>$1</sub>")}${ch ? `<sup>${ch.replace("-", "−")}</sup>` : ""}</span>`; };
 const signed = n => n > 0 ? "+" + n : n < 0 ? "−" + -n : "0";
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
-function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 
-const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+// 元素の色（分子模型の色に近づけた）。表の色見本と原子カウンターのブロックで共通
+const EL_COL = { H: "#f4f4f4", O: "#e5384f", C: "#3d3d48", N: "#3f6fd8", Cl: "#62c44c", S: "#f2d43a", Na: "#a466e0", K: "#7a3fc4", Ca: "#8fa0b0", Mg: "#2fae7a",
+  Al: "#c9b8d8", Fe: "#e07a2a", Cu: "#c8743c", Ag: "#c0c8d0", Zn: "#7d8fb8", P: "#ff9a3c", Mn: "#b04a9a", Cr: "#4ab0a0", I: "#7a2a9a", Br: "#9a2a1a", F: "#a8e86a", Si: "#d8b880", Pb: "#4a4f6a", Sn: "#8a9aa0" };
+const extraCol = ["#e8a0c0", "#a0d0e8", "#d8d070", "#90c090"];
+const elCol = e => EL_COL[e] || extraCol[e.charCodeAt(0) % extraCol.length];
+
+// =========================================================
+// ドット絵の部品
+// =========================================================
+function Grid(w, h) { this.w = w; this.h = h; this.a = new Array(w * h).fill(null); }
+Grid.prototype.set = function (x, y, c) { x = Math.floor(x); y = Math.floor(y); if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.a[y * this.w + x] = c; };
+Grid.prototype.get = function (x, y) { return (x < 0 || y < 0 || x >= this.w || y >= this.h) ? null : this.a[y * this.w + x]; };
+const rect = (G, x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) G.set(x + i, y + j, c); };
+const ell = (G, cx, cy, rx, ry, c) => { for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) { const dx = (x + .5 - cx) / rx, dy = (y + .5 - cy) / ry; if (dx * dx + dy * dy <= 1) G.set(x, y, c); } };
+const poly = (G, pts, c) => {
+  const ys = pts.map(p => p[1]); const y0 = Math.floor(Math.min(...ys)), y1 = Math.ceil(Math.max(...ys));
+  for (let y = y0; y <= y1; y++) {
+    const sy = y + .5, xs = [];
+    for (let i = 0; i < pts.length; i++) { const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % pts.length]; if ((ay <= sy && by > sy) || (by <= sy && ay > sy)) xs.push(ax + (sy - ay) * (bx - ax) / (by - ay)); }
+    xs.sort((a, b) => a - b);
+    for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.round(xs[k]); x < Math.round(xs[k + 1]); x++) G.set(x, y, c);
+  }
+};
+const gline = (G, x0, y0, x1, y1, c) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1; for (let i = 0; i <= n; i++) G.set(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), c); };
+const recolor = (G, fn) => { const out = []; for (let y = 0; y < G.h; y++) for (let x = 0; x < G.w; x++) { const c = fn(x, y, G.get(x, y)); if (c) out.push([x, y, c]); } out.forEach(([x, y, c]) => G.set(x, y, c)); };
+const rim = (G, base, hi, lo) => recolor(G, (x, y, c) => { if (c !== base) return null; if (G.get(x + 1, y) !== base || G.get(x, y + 1) === null) return lo; if (G.get(x - 1, y) === null || G.get(x, y - 1) === null) return hi; return null; });
+const outline = (G, c) => recolor(G, (x, y, v) => (!v && (G.get(x - 1, y) || G.get(x + 1, y) || G.get(x, y - 1) || G.get(x, y + 1))) ? c : null);
+const toCanvas = G => { const cv = document.createElement("canvas"); cv.width = G.w; cv.height = G.h; const c = cv.getContext("2d"); for (let y = 0; y < G.h; y++) for (let x = 0; x < G.w; x++) { const v = G.get(x, y); if (v) { c.fillStyle = v; c.fillRect(x, y, 1, 1); } } return cv; };
+
+const INK = "#140d18";
+function coat(G, W, top, C) {
+  const M = p => p.map(([x, y]) => [W - x, y]);
+  poly(G, [[W / 2 - 9, top], [W / 2 + 9, top], [W / 2 + 13, 64], [W / 2 - 13, 64]], C.coat);
+  const sl = [[W / 2 - 9, top + 1], [W / 2 - 15, top + 7], [W / 2 - 18, top + 24], [W / 2 - 12, top + 26], [W / 2 - 9, top + 12]];
+  poly(G, sl, C.coat); poly(G, M(sl), C.coat);
+  rect(G, W / 2 - 18, top + 24, 6, 4, C.skin); rect(G, W / 2 + 12, top + 24, 6, 4, C.skin);
+  rim(G, C.coat, "#ffffff", C.coatSh);
+  poly(G, [[W / 2 - 5, top], [W / 2 + 5, top], [W / 2, top + 11]], C.shirt);
+  gline(G, W / 2, top + 2, W / 2, top + 9, C.tie); G.set(W / 2 - 1, top + 2, C.tie);
+  gline(G, W / 2 - 5, top, W / 2, top + 11, C.coatSh); gline(G, W / 2 + 5, top, W / 2, top + 11, C.coatSh);
+  gline(G, W / 2, top + 12, W / 2, 63, C.coatSh);
+  rect(G, W / 2 - 8, top + 15, 4, 1, C.coatSh); rect(G, W / 2 + 4, top + 15, 4, 1, C.coatSh);
+  rect(G, W / 2 + 5, top + 12, 1, 3, C.pen);
+}
+function buildDoc(blink, talk) {
+  const W = 48, G = new Grid(W, 66);
+  const C = { coat: "#eef0f4", coatSh: "#b9c0cf", skin: "#f2c9a4", skinSh: "#d8a985", hair: "#f4f4f4", hairSh: "#c9ccd6", shirt: "#4f8a64", tie: "#8a3a8e", pen: "#3a6ed8", glass: "#cfe9ff", mouth: "#6a2a2a" };
+  coat(G, W, 33, C);
+  rect(G, 21, 29, 6, 4, C.skin);
+  ell(G, 24, 20, 9, 10, C.skin);
+  ell(G, 15.5, 20, 3.5, 6, C.hair); ell(G, 32.5, 20, 3.5, 6, C.hair);
+  rim(G, C.hair, C.hair, C.hairSh);
+  rect(G, 18, 16, 4, 1, C.hair); rect(G, 26, 16, 4, 1, C.hair);
+  rect(G, 17, 18, 6, 4, INK); rect(G, 25, 18, 6, 4, INK); rect(G, 23, 19, 2, 1, INK);
+  rect(G, 18, 19, 4, 2, "#ffffff"); rect(G, 26, 19, 4, 2, "#ffffff");
+  G.set(20, 19, C.glass); G.set(19, 20, C.glass); G.set(28, 19, C.glass); G.set(27, 20, C.glass);
+  G.set(24, 22, C.skinSh); G.set(24, 23, C.skinSh);
+  ell(G, 24, 25.5, 5, 1.6, C.hair);
+  if (talk) rect(G, 23, 27, 2, 2, C.mouth);
+  G.set(20, 11, "#ffffff"); G.set(21, 11, "#ffffff"); G.set(20, 12, "#ffffff");
+  outline(G, INK);
+  return toCanvas(G);
+}
+function buildApp(blink, talk) {
+  const W = 48, G = new Grid(W, 66);
+  const C = { coat: "#eef0f4", coatSh: "#b9c0cf", skin: "#ffdcbf", skinSh: "#e8b996", hair: "#e2b33c", hairHi: "#fbe08a", shirt: "#f3f5fb", tie: "#f3f5fb", pen: "#e5384f", strap: "#3a3f5c", lens: "#6fd3ff", cheek: "#f79aa6", mouth: "#c24a5a", ribbon: "#e5384f", ribbonSh: "#a8243a", clip: "#e5384f" };
+  coat(G, W, 35, C);
+  rect(G, 21, 31, 6, 4, C.skin);
+  rect(G, 20, 36, 3, 3, C.ribbon); rect(G, 25, 36, 3, 3, C.ribbon); rect(G, 23, 36, 2, 3, C.ribbonSh);
+  ell(G, 24, 21, 10, 11, C.hair);
+  ell(G, 24, 23, 8, 9, C.skin);
+  poly(G, [[14, 13], [34, 13], [34, 19], [31, 17], [27, 18], [24, 16], [20, 19], [17, 17], [14, 19]], C.hair);
+  rect(G, 14, 17, 3, 11, C.hair); rect(G, 31, 17, 3, 11, C.hair);
+  rect(G, 13, 26, 2, 3, C.hair); rect(G, 11, 28, 3, 2, C.hair); G.set(10, 27, C.hair);
+  rect(G, 33, 26, 2, 3, C.hair); rect(G, 34, 28, 3, 2, C.hair); G.set(37, 27, C.hair);
+  rim(G, C.hair, C.hairHi, C.hair);
+  rect(G, 30, 15, 3, 1, C.clip); rect(G, 31, 16, 2, 1, C.clip);
+  rect(G, 14, 11, 20, 2, C.strap);
+  rect(G, 16, 9, 6, 5, INK); rect(G, 26, 9, 6, 5, INK);
+  rect(G, 17, 10, 4, 3, C.lens); rect(G, 27, 10, 4, 3, C.lens);
+  G.set(17, 10, "#ffffff"); G.set(27, 10, "#ffffff");
+  if (!blink) { rect(G, 19, 21, 2, 4, INK); rect(G, 27, 21, 2, 4, INK); G.set(19, 22, "#ffffff"); G.set(27, 22, "#ffffff"); G.set(18, 21, INK); G.set(29, 21, INK); }
+  else { rect(G, 18, 24, 3, 1, INK); rect(G, 27, 24, 3, 1, INK); }
+  rect(G, 18, 26, 2, 1, C.cheek); rect(G, 28, 26, 2, 1, C.cheek);
+  if (talk) rect(G, 23, 27, 2, 2, C.mouth); else { G.set(23, 28, C.mouth); G.set(24, 28, C.mouth); }
+  outline(G, INK);
+  return toCanvas(G);
+}
+const SPR = {
+  doc: [[buildDoc(0, 0), buildDoc(0, 1)], [buildDoc(1, 0), buildDoc(1, 1)]],
+  app: [[buildApp(0, 0), buildApp(0, 1)], [buildApp(1, 0), buildApp(1, 1)]],
 };
 
+// 棚の飾り
+const DECOR = (() => {
+  const GL = "#d6ebf3", GLS = "#a9c6d4", LIQ = { c: "#eef8ff", b: "#cfe6fa", y: "#f6f0c8", g: "#e2f2d8", w: "#f7f6f0", p: "#f0c8d8" };
+  const make = (w, h, fn) => { const G = new Grid(w, h); fn(G); outline(G, INK); return toCanvas(G); };
+  const fill = (G, from, col) => recolor(G, (x, y, v) => (v === GL && y >= from) ? col : null);
+  const out = {};
+  for (const [k, col] of Object.entries(LIQ)) {
+    out["bottle:" + k] = make(9, 17, G => { rect(G, 1, 6, 7, 11, GL); rect(G, 3, 2, 3, 4, GL); rect(G, 2, 0, 5, 2, "#5a6a7a"); fill(G, 9, col); rim(G, GL, GL, GLS); gline(G, 2, 7, 2, 15, "#ffffff"); });
+    out["flask:" + k] = make(13, 18, G => { rect(G, 5, 0, 3, 6, GL); poly(G, [[5, 6], [8, 6], [12.5, 18], [0.5, 18]], GL); fill(G, 12, col); rim(G, GL, GL, GLS); rect(G, 4, 0, 5, 1, GL); });
+    out["jar:" + k] = make(12, 15, G => { rect(G, 1, 3, 10, 12, GL); rect(G, 1, 0, 10, 3, "#3a3f5c"); fill(G, 7, col); rim(G, GL, GL, GLS); });
+  }
+  out.brown = make(9, 17, G => { rect(G, 1, 6, 7, 11, "#7a3f16"); rect(G, 3, 2, 3, 4, "#7a3f16"); rect(G, 2, 0, 5, 2, "#3a2a20"); rim(G, "#7a3f16", "#7a3f16", "#552a0c"); gline(G, 2, 7, 2, 15, "#a86a3a"); });
+  return out;
+})();
+
+const P = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+const bg = document.createElement("canvas"); bg.width = 256; bg.height = 128;
+(function drawLab(c) {
+  P(c, 0, 0, 256, 128, "#dbeef7");
+  P(c, 0, 72, 256, 8, "#9fb8c8"); P(c, 0, 72, 256, 1, "#8aa4b6");
+  // 窓
+  P(c, 6, 6, 38, 30, "#8a6a46"); P(c, 8, 8, 34, 26, "#9fd4f0");
+  P(c, 10, 26, 11, 4, "#ffffff"); P(c, 12, 24, 7, 2, "#ffffff"); P(c, 30, 13, 9, 3, "#ffffff"); P(c, 32, 11, 5, 2, "#ffffff");
+  P(c, 24, 8, 2, 26, "#8a6a46"); P(c, 8, 20, 34, 2, "#8a6a46");
+  // 周期表のポスター
+  P(c, 46, 8, 16, 22, "#8a6a46"); P(c, 47, 9, 14, 20, "#fffaf0");
+  const pt = ["#e5384f", "#62c44c", "#3f6fd8", "#f2d43a"];
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 6; x++) if (!(y < 2 && x > 0 && x < 5)) P(c, 48 + x * 2, 11 + y * 3, 1, 2, pt[(x + y) % 4]);
+  // 薬品棚（奥）
+  P(c, 66, 4, 124, 36, "#5a3a24"); P(c, 68, 6, 120, 30, "#2a1c14");
+  P(c, 66, 22, 124, 3, "#7a5234"); P(c, 66, 36, 124, 4, "#7a5234"); P(c, 66, 39, 124, 1, "#4a2e1a");
+  [[22, ["bottle:c", "jar:w", "brown", "bottle:y", "jar:w", "brown", "bottle:c", "bottle:g", "jar:w", "bottle:c", "brown", "bottle:b"]],
+   [36, ["jar:w", "bottle:c", "jar:p", "brown", "bottle:c", "jar:w", "bottle:y", "jar:w", "bottle:c", "brown", "jar:w"]]].forEach(([y, items]) => {
+    let x = 71;
+    for (const key of items) { const im = DECOR[key]; const h = Math.min(im.height, 15); if (x + im.width > 187) break; c.drawImage(im, 0, im.height - h, im.width, h, x, y - h, im.width, h); x += im.width + 1; }
+  });
+  // 床
+  P(c, 0, 80, 256, 48, "#8d9199");
+  for (let x = 0; x < 256; x += 16) P(c, x, 80, 1, 48, "#7f838b");
+  for (let y = 96; y < 128; y += 16) P(c, 0, y, 256, 1, "#7f838b");
+  // 右の壁の黒板（係数のメモ）
+  P(c, 198, 8, 52, 30, "#7a5234"); P(c, 200, 10, 48, 26, "#2f4a3c");
+  const chalk = "#e8f0e0";
+  [[203, 14, 4], [209, 14, 1], [212, 14, 6], [220, 14, 2], [224, 14, 7], [203, 20, 2], [207, 20, 9], [218, 20, 3], [203, 27, 12], [217, 27, 5], [224, 27, 3], [229, 27, 6]].forEach(([x, y, w]) => P(c, x, y, w, 1, chalk));
+  P(c, 240, 30, 6, 2, "#f4f4f4");
+  // 消火器
+  P(c, 191, 74, 6, 15, "#c8303a"); P(c, 192, 75, 1, 13, "#e8606a"); P(c, 192, 71, 4, 3, "#2a2a2a"); P(c, 191, 80, 6, 3, "#f0e8d8");
+  // 実験台
+  P(c, 56, 92, 144, 6, "#9aa3b5"); P(c, 56, 92, 144, 1, "#c9d0de"); P(c, 56, 98, 144, 30, "#4a536a");
+  for (let x = 60; x < 200; x += 36) { P(c, x, 102, 30, 20, "#424a60"); P(c, x + 13, 110, 4, 2, "#9aa3b5"); }
+})(bg.getContext("2d"));
+
+// =========================================================
+// 描画ループ：原子カウンター
+// 左辺・右辺の原子を、元素ごとの列に積んで数をくらべる装置（質量ではなく個数を見る）
+// =========================================================
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DEV = { x: 60, y: 22, w: 136, h: 66 };            // 装置の外わく
+const TRAY = [{ x: 64, w: 58 }, { x: 134, w: 58 }];      // 左辺・右辺の画面
+const TRAY_TOP = 34, TRAY_BOT = 80, PITCH = 7, MAXB = 22;
+const scene = { cols: [], lamp: "off", hidden: false, scale: 1, fx: null, active: false };
+const blink = { doc: 0, app: 0 }, nextBlink = { doc: 1500, app: 2600 };
+let speaker = null, typing = false, lastDraw = 0;
+
+const colX = (tray, i) => { const n = scene.cols.length; return tray.x + Math.round((tray.w - (n * PITCH - 2)) / 2) + i * PITCH; };
+function drawTray(c, tray, side) {
+  P(c, tray.x, TRAY_TOP - 4, tray.w, TRAY_BOT - TRAY_TOP + 12, "#24323a");
+  for (let y = TRAY_TOP; y <= TRAY_BOT; y += 6) P(c, tray.x + 1, y, tray.w - 2, 1, "#2e3e47");   // 目盛り線
+  if (scene.hidden) {
+    P(c, tray.x + 2, TRAY_TOP - 2, tray.w - 4, TRAY_BOT - TRAY_TOP + 8, "#e8dcc0");
+    for (let x = tray.x + 6; x < tray.x + tray.w - 4; x += 8) P(c, x, TRAY_TOP - 2, 1, TRAY_BOT - TRAY_TOP + 8, "#c8b088");
+    const cx = tray.x + tray.w / 2 - 2, cy = TRAY_TOP + 14;
+    P(c, cx, cy, 4, 1, INK); P(c, cx + 3, cy + 1, 2, 2, INK); P(c, cx + 1, cy + 3, 2, 2, INK); P(c, cx + 1, cy + 6, 2, 1, INK);
+    return;
+  }
+  scene.cols.forEach((col, i) => {
+    // 1ブロック＝原子 scale 個。あまりは、幅をあまりの数に比例させた小さいブロックで表す
+    const x = colX(tray, i), n = side ? col.R : col.L, full = Math.floor(n / scene.scale), rem = n % scene.scale;
+    for (let k = 0; k < full + (rem ? 1 : 0); k++) {
+      const y = TRAY_BOT - 2 - k * 2, wd = k < full ? 5 : Math.max(1, Math.round(5 * rem / scene.scale));
+      P(c, x, y, wd, 1, col.c); P(c, x, y + 1, wd, 1, "rgba(0,0,0,.5)");
+    }
+    P(c, x, TRAY_BOT + 1, 5, 2, col.c);                                         // 元素の色見本
+    P(c, x, TRAY_BOT + 4, 5, 1, col.L === col.R ? "#6fe06a" : "#ff5060");       // そろっている列は緑、ちがう列は赤
+  });
+}
+// 量的関係モード：換算パイプライン装置
+// ［与えた量］→［物質量（与えた物質）］→［係数比ギア］→［物質量（求める物質）］→［求める量］
+const ST_X = i => 65 + i * 27, ST_Y = 36, ST_W = 18, ST_H = 26, PIPE_Y = 47;
+function pipeRoute(q) {   // 0〜4：装置、10〜13：管（10 は 0 と 1 の間）。この問題で通る順
+  const r = [];
+  if (q.from !== "n") r.push(0, 10);
+  r.push(1, 11, 2, 12, 3);
+  if (q.to !== "n") r.push(13, 4);
+  return r;
+}
+function drawUnitIcon(c, x, y, unit, col, fill, t) {
+  if (unit === "n") {   // 物質量：フラスコ
+    P(c, x + 7, y + 4, 4, 6, "#9fb8c8"); P(c, x + 3, y + 10, 12, 13, "#9fb8c8"); P(c, x + 4, y + 11, 10, 11, "#33454f");
+    const h = Math.round(2 + fill * 9); P(c, x + 4, y + 22 - h, 10, h, col); P(c, x + 5, y + 12, 1, 6, "rgba(255,255,255,.5)");
+  } else if (unit === "m") {   // 質量：電子はかりと、のせた粉末
+    P(c, x + 2, y + 16, 14, 7, "#9fb8c8"); P(c, x + 4, y + 18, 7, 3, "#1c3a2a"); P(c, x + 5, y + 19, 1, 1, "#6fe06a"); P(c, x + 7, y + 19, 1, 1, "#6fe06a"); P(c, x + 9, y + 19, 1, 1, "#6fe06a");
+    P(c, x + 3, y + 14, 12, 2, "#c3ccd5");
+    const h = Math.round(2 + fill * 7); P(c, x + 9 - h, y + 14 - h, h * 2 - 2, h, col); P(c, x + 7 - Math.round(h / 2), y + 14 - h - 1, h, 1, col);
+  } else if (unit === "V") {   // 気体の体積：目盛りつきのシリンダーと気体の粒
+    P(c, x + 4, y + 3, 10, 20, "#9fb8c8"); P(c, x + 5, y + 4, 8, 18, "#33454f");
+    for (let k = 0; k < 4; k++) P(c, x + 12, y + 7 + k * 4, 1, 1, "#9fb8c8");
+    const n = Math.round(2 + fill * 6);
+    for (let k = 0; k < n; k++) { const ph = reduceMotion ? 0 : t / 400 + k * 1.7; P(c, x + 6 + Math.round((Math.sin(ph) + 1) * 2.5), y + 6 + ((k * 5 + Math.round(t / 90)) % 14), 2, 2, col); }
+  } else {   // 個数：粒が並んだトレー
+    P(c, x + 2, y + 6, 14, 14, "#33454f");
+    const n = Math.round(3 + fill * 6);
+    for (let k = 0; k < 9; k++) P(c, x + 3 + (k % 3) * 4, y + 7 + Math.floor(k / 3) * 4, 3, 3, k < n ? col : "#46596a");
+  }
+}
+function drawGear(c, cx, cy, r, teeth, ang, col) {
+  for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r) P(c, cx + xx, cy + yy, 1, 1, col);
+  for (let k = 0; k < teeth; k++) { const a = ang + k * 2 * Math.PI / teeth; P(c, Math.round(cx + Math.cos(a) * (r + 1.5)) - 1, Math.round(cy + Math.sin(a) * (r + 1.5)) - 1, 2, 2, col); }
+  P(c, cx - 1, cy - 1, 2, 2, INK);
+}
+function drawPipe(c, t) {
+  const q = scene.qty, route = pipeRoute(q), flowing = q.flowT != null;
+  const prog = flowing ? (reduceMotion ? 99 : (t - q.flowT) / 260) : -1;   // 何区間目まで流れたか
+  const reached = k => route.indexOf(k) >= 0 && prog >= route.indexOf(k);
+  const LIQ = { x: "#ffd23f", y: "#6fd3ff" };
+  // 管
+  for (let k = 0; k < 4; k++) {
+    const id = 10 + k, on = route.includes(id), x0 = ST_X(k) + ST_W, w = ST_X(k + 1) - x0;
+    c.globalAlpha = on ? 1 : .3;
+    P(c, x0, PIPE_Y - 1, w, 5, INK); P(c, x0, PIPE_Y, w, 3, "#59636e");
+    if (on) {
+      const col = k < 2 ? LIQ.x : LIQ.y, i = route.indexOf(id);
+      if (flowing) { const f = Math.max(0, Math.min(1, prog - i)); P(c, x0, PIPE_Y, Math.round(w * f), 3, col); }
+      else for (let d = 0; d < w; d += 3) if (((d + Math.floor(t / 120)) % 6) < 2) P(c, x0 + d, PIPE_Y + 1, 2, 1, col);
+    }
+    c.globalAlpha = 1;
+  }
+  // 装置
+  for (let i = 0; i < 5; i++) {
+    const x = ST_X(i), y = ST_Y, on = route.includes(i);
+    c.globalAlpha = on ? 1 : .3;
+    P(c, x - 1, y - 1, ST_W + 2, ST_H + 2, INK); P(c, x, y, ST_W, ST_H, "#24323a");
+    P(c, x, y, ST_W, 2, i < 2 ? LIQ.x : i > 2 ? LIQ.y : "#c3ccd5");   // 黄＝与えた物質、青＝求める物質
+    const fill = reached(i) ? 1 : 0;
+    if (i === 0) drawUnitIcon(c, x, y, q.from, q.cx, flowing ? fill : 1, t);
+    if (i === 1) drawUnitIcon(c, x, y, "n", q.cx, fill, t);
+    if (i === 3) drawUnitIcon(c, x, y, "n", q.cy, fill, t);
+    if (i === 4) drawUnitIcon(c, x, y, q.to, q.cy, fill, t);
+    if (i === 2) {
+      const ang = reduceMotion ? 0 : t / (flowing && prog < route.length ? 120 : 900);
+      drawGear(c, x + 6, y + 9, 3, Math.min(q.aX, 8), ang, LIQ.x);
+      drawGear(c, x + 12, y + 18, 3, Math.min(q.aY, 8), -ang, LIQ.y);
+    }
+    c.globalAlpha = 1;
+  }
+  // 下の目盛り：換算のしかた
+  const lab = (k, s) => { const cx = k === 2 ? ST_X(2) + ST_W / 2 : ST_X(k === 10 ? 0 : 3) + ST_W + 4.5; drawTiny(c, s, Math.round(cx - s.length * 2), 66); };
+  if (q.from !== "n") lab(10, q.from === "V" ? "÷22.4" : q.from === "m" ? "÷M" : "÷NA");
+  lab(2, `x${q.aY}/${q.aX}`);
+  if (q.to !== "n") lab(13, q.to === "V" ? "x22.4" : q.to === "m" ? "xM" : "xNA");
+  // ランプ（右下）
+  const lampCol = scene.lamp === "ok" ? "#6fe06a" : scene.lamp === "ng" ? (Math.floor(t / 150) % 2 ? "#ff4050" : "#8a2030") : "#6a6a72";
+  P(c, 186, 76, 7, 7, INK); P(c, 187, 77, 5, 5, lampCol); P(c, 187, 77, 1, 1, "#ffffff");
+}
+function drawCounter(c, t) {
+  const { x, y, w, h } = DEV;
+  // 脚と本体
+  P(c, x + 6, y + h, 6, 92 - y - h, "#59636e"); P(c, x + w - 12, y + h, 6, 92 - y - h, "#59636e");
+  P(c, x, y, w, h, "#8e99a5"); P(c, x + 1, y + 1, w - 2, h - 2, "#c3ccd5"); P(c, x + 1, y + 1, w - 2, 1, "#eef1f4");
+  P(c, x - 1, y - 1, w + 2, 1, INK); P(c, x - 1, y + h, w + 2, 1, INK); P(c, x - 1, y, 1, h, INK); P(c, x + w, y, 1, h, INK);
+  // 見出しの小窓（左辺 → 右辺）とランプ
+  P(c, x + 4, y + 3, 54, 4, "#59636e"); P(c, x + w - 58, y + 3, 54, 4, "#59636e");
+  const lampCol = scene.lamp === "ok" ? "#6fe06a" : scene.lamp === "ng" ? (Math.floor(t / 150) % 2 ? "#ff4050" : "#8a2030") : "#6a6a72";
+  if (scene.qty) { drawPipe(c, t); return; }
+  P(c, 125, 66, 7, 7, INK); P(c, 126, 67, 5, 5, lampCol); P(c, 126, 67, 1, 1, "#ffffff");   // ランプ（吹き出しに隠れない位置）
+  TRAY.forEach((tr, s) => drawTray(c, tr, s));
+  // まん中の矢印
+  P(c, 124, 56, 9, 1, INK); P(c, 130, 54, 1, 5, INK); P(c, 131, 55, 1, 3, INK);
+  if (!scene.qty && scene.scale > 1 && !scene.hidden) { P(c, 123, 40, 11, 7, "#f8f4e6"); drawTiny(c, `x${scene.scale}`, 124, 41); }
+}
+// 3x5 の小さな文字（数字と x）
+const TINY = { 0: ["###", "#.#", "#.#", "#.#", "###"], 1: [".#.", "##.", ".#.", ".#.", "###"], 2: ["##.", "..#", ".#.", "#..", "###"], 3: ["##.", "..#", ".#.", "..#", "##."], 4: ["#.#", "#.#", "###", "..#", "..#"], 5: ["###", "#..", "##.", "..#", "##."], 6: [".##", "#..", "###", "#.#", "###"], 7: ["###", "..#", ".#.", ".#.", ".#."], 8: ["###", "#.#", "###", "#.#", "###"], 9: ["###", "#.#", "###", "..#", "##."], x: ["...", "#.#", ".#.", "#.#", "..."], ".": ["...", "...", "...", "...", ".#."], "/": ["..#", "..#", ".#.", "#..", "#.."], "÷": [".#.", "...", "###", "...", ".#."], N: ["#.#", "###", "###", "###", "#.#"], A: [".#.", "#.#", "###", "#.#", "#.#"], M: ["#.#", "###", "#.#", "#.#", "#.#"] };
+function drawTiny(c, s, x, y) { [...s].forEach((ch, k) => (TINY[ch] || []).forEach((r, j) => [...r].forEach((d, i) => { if (d === "#") P(c, x + k * 4 + i, y + j, 1, 1, INK); }))); }
+
+function frame(t) {
+  requestAnimationFrame(frame);
+  if (t - lastDraw < 50) return;
+  lastDraw = t;
+  ctx.drawImage(bg, 0, 0);
+  if (scene.active) drawCounter(ctx, t);
+  ["doc", "app"].forEach(k => {
+    if (t > nextBlink[k]) { blink[k] = t + 140; nextBlink[k] = t + 2400 + Math.random() * 2600; }
+    const talk = !reduceMotion && typing && speaker === k && Math.floor(t / 140) % 2 === 0;
+    const x = k === "doc" ? 6 : 202, y = k === "doc" ? 62 : 64;
+    ctx.drawImage(SPR[k][t < blink[k] ? 1 : 0][talk ? 1 : 0], x, y);
+  });
+  // 演出
+  const fx = scene.fx;
+  if (fx && t < fx.until) {
+    const tt = reduceMotion ? 0 : t - fx.t0;
+    if (fx.ok) {
+      // 反応成功：装置の上に泡とキラキラ
+      for (let i = 0; i < 22; i++) {
+        const p = reduceMotion ? (i * 5) % 30 : ((tt / 40 + i * 7) % 30);
+        const tr = TRAY[i % 2];
+        const x = Math.round(tr.x + tr.w / 2 + Math.sin(i * 1.9 + tt / 300) * 20), y = Math.round(TRAY_BOT - 6 - p);
+        ctx.globalAlpha = Math.max(0, 1 - p / 30);
+        P(ctx, x, y, i % 3 ? 2 : 3, i % 3 ? 2 : 3, ["#ffffff", "#bfe4ff", "#ffe08a"][i % 3]);
+      }
+      ctx.globalAlpha = 1;
+      const b = reduceMotion ? 0 : Math.round(Math.sin(tt / 120));
+      [[128, 12], [90, 15], [166, 14]].forEach(([x, y], k) => { const g = "#f6d860", yy = y + (k % 2 ? -b : b);
+        P(ctx, x, yy - 3, 1, 7, g); P(ctx, x - 3, yy, 7, 1, g); P(ctx, x - 1, yy - 1, 3, 3, g); });
+    } else if (Math.floor(tt / 160) % 2 === 0) {
+      // 失敗：数がちがう列を赤いわくで点滅
+      if (scene.qty && fx.stage != null) { const x = ST_X(fx.stage) - 2, r = "#ff5060"; P(ctx, x, ST_Y - 2, ST_W + 4, 1, r); P(ctx, x, ST_Y + ST_H + 1, ST_W + 4, 1, r); P(ctx, x, ST_Y - 2, 1, ST_H + 4, r); P(ctx, x + ST_W + 3, ST_Y - 2, 1, ST_H + 4, r); }
+      fx.bad.forEach(i => TRAY.forEach(tr => { const x = colX(tr, i) - 1, r = "#ff5060";
+        P(ctx, x, TRAY_TOP - 3, 7, 1, r); P(ctx, x, TRAY_BOT + 5, 7, 1, r); P(ctx, x, TRAY_TOP - 3, 1, TRAY_BOT - TRAY_TOP + 9, r); P(ctx, x + 6, TRAY_TOP - 3, 1, TRAY_BOT - TRAY_TOP + 9, r); }));
+    }
+  }
+}
+requestAnimationFrame(frame);
+
+// =========================================================
+// ゲーム進行
+// =========================================================
 const $ = id => document.getElementById(id);
-const hintEl = $("hint-toggle");
-hintEl.checked = store.get("keisu-hint", true);
+let typeTimer = null;
+const lastPick = {};
+function pickLine(key, arr) {
+  let i = Math.floor(Math.random() * arr.length);
+  if (arr.length > 1 && i === lastPick[key]) i = (i + 1 + Math.floor(Math.random() * (arr.length - 1))) % arr.length;
+  lastPick[key] = i; return arr[i];
+}
+function say(who, html) {
+  clearInterval(typeTimer);
+  const talk = $("talk"); talk.hidden = false;
+  talk.className = "talk " + (who === "doc" ? "left" : "right");
+  $("who").textContent = who === "doc" ? "博士" : "助手";
+  speaker = who; typing = true;
+  const parts = html.split(/(<[^>]+>)/).filter(Boolean);
+  let n = 0; const len = parts.reduce((s, p) => s + (p[0] === "<" ? 0 : p.length), 0);
+  const render = m => { let left = m, out = ""; for (const p of parts) { if (p[0] === "<") { out += p; continue; } if (left <= 0) break; out += p.slice(0, left); left -= p.length; } $("line").innerHTML = out; };
+  if (reduceMotion) { render(len); typing = false; return; }
+  typeTimer = setInterval(() => { n += 2; render(n); if (n >= len) { clearInterval(typeTimer); typing = false; } }, 35);
+}
 
-/* S.set: 今回出題する問題の配列, S.res: 各問の結果 {stars, taps, shown, skipped} */
-let S = {
-  screen: "home", lv: store.get("keisu-lv", 0), cnt: store.get("keisu-cnt", 10), ion: false,
-  set: [], idx: 0, res: [], coefs: [], taps: 0, solved: false, shown: false,
+const S = {
+  step: "menu", lv: store.get("keisu.lv", 0), cnt: store.get("keisu.cnt", 10), ion: store.get("keisu.ion", false), lifeSel: store.get("keisu.life", 5),
+  hint: store.get("keisu.hint", true), mode: store.get("keisu.mode", "coef"), expr: "", cursor: 0, q: null,
+  set: [], idx: 0, res: [], coefs: [], taps: 0, miss: 0, solved: false, shown: false, life: 5,
 };
-let best = store.get("keisu-best", {});
+if (![0, 1, 2, "bm"].includes(S.lv)) S.lv = 0;
+if (![5, 10, 20, "all"].includes(S.cnt)) S.cnt = 10;
+if (![3, 5, 7].includes(S.lifeSel)) S.lifeSel = 5;
+if (!["coef", "qty"].includes(S.mode)) S.mode = "coef";
+const best = (() => { const v = store.get("keisu.best", {}); return v && typeof v === "object" ? v : {}; })();
 
 const cur = () => S.set[S.idx];
-const pool = () => S.ion ? [...PROBLEMS[S.lv], ...ION_PROBLEMS[S.lv]] : PROBLEMS[S.lv];
-const bestKey = () => S.lv + "-" + S.cnt + (S.ion ? "-ion" : "");
 const species = p => [...p.L, ...p.R];
-
-/* ---------- 画面切り替え ---------- */
-function show(name) {
-  S.screen = name;
-  for (const n of ["home", "game", "result"]) $("screen-" + n).hidden = n !== name;
-  window.scrollTo(0, 0);
+// 付せん（この端末のブラウザに保存）と、一覧の記録 { id: { c: 出題回数, b: 最高の★ } }
+const bm = new Set(store.get("keisu.bm", []).map(fixId).filter(id => ALL.some(p => p.id === id)));
+const saveBm = () => store.set("keisu.bm", ALL.filter(p => bm.has(p.id)).map(p => p.id));
+const seen = (() => { const v = store.get("keisu.seen", {}), o = {}; if (v && typeof v === "object") for (const k in v) o[fixId(k)] = v[k]; return o; })();
+function syncBm() {
+  document.querySelectorAll("[data-bm]").forEach(b => { const on = bm.has(b.dataset.bm); b.setAttribute("aria-pressed", String(on)); b.innerHTML = `<i class="fu" aria-hidden="true"></i>${on ? "付せんをはがす" : "付せんをはる"}`; });
+  if (S.step === "menu") renderMenu();
 }
-
-function renderHome() {
-  document.querySelectorAll("#pick-lv .choice").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.lv === S.lv)));
-  document.querySelectorAll("#pick-cnt .choice").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.cnt === S.cnt)));
-  document.querySelectorAll("[data-best]").forEach(el => {
-    const lv = +el.dataset.best, b = best[lv + "-" + S.cnt + (S.ion ? "-ion" : "")];
-    el.textContent = b != null ? `${S.cnt}問の最高 ★${b} / ${S.cnt * 3}` : "";
-  });
-  $("ion-toggle").checked = S.ion;
-  const n = pool().length, ni = S.ion ? `（うちイオン反応式${ION_PROBLEMS[S.lv].length}問）` : "";
-  $("pool-note").textContent = `${LV_NAME[S.lv]}は全${n}問${ni}。その中から${S.cnt}問をランダムに出題します。`;
+function toggleBm(id) { if (bm.has(id)) bm.delete(id); else bm.add(id); saveBm(); syncBm(); }
+function autoFusen() { const p = cur(); if (S.mode === "qty" || !p || bm.has(p.id)) return false; bm.add(p.id); saveBm(); syncBm(); return true; }
+function recordCur() {
+  if (S.mode === "qty") return;   // 化学反応一覧の記録は係数モードだけ
+  const p = cur(); if (!p || S.recorded === S.idx) return;
+  const r = S.res[S.idx]; if (!r && !S.taps) return;   // 何もしなかった問題は記録しない
+  S.recorded = S.idx;
+  const e = seen[p.id] || { c: 0, b: 0 };
+  e.c++; if (r && r.stars > e.b) e.b = r.stars;
+  seen[p.id] = e; store.set("keisu.seen", seen);
 }
+const poolOf = lv => S.mode === "qty" ? (lv === "bm" ? ALL.filter(p => bm.has(p.id)) : PROBLEMS[lv]).filter(p => QTY_ABLE.has(p.id))
+  : lv === "bm" ? ALL.filter(p => bm.has(p.id)) : S.ion ? [...PROBLEMS[lv], ...ION_PROBLEMS[lv]] : PROBLEMS[lv];
+const pool = () => poolOf(S.lv);
+const cntN = () => S.cnt === "all" ? pool().length : Math.min(S.cnt, pool().length);   // 実際に出題する数
+const keyOf = lv => S.mode === "qty" ? `q-${lv}-${S.cnt}` : `${lv}-${S.cnt}${S.ion ? "-ion" : ""}`;
+const total = () => S.res.reduce((s, r) => s + (r && r.stars || 0), 0);
 
-function startSession() {
-  S.set = shuffle(pool()).slice(0, S.cnt);
+function show(id) { ["menu", "gamePanel", "reviewPanel"].forEach(k => $(k).hidden = k !== id); }
+function press(group, v) { [...$(group).children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(v)))); }
+
+function renderMenu() {
+  press("modeOpts", S.mode); $("ionSec").hidden = S.mode === "qty"; press("lvOpts", S.lv); press("cntOpts", S.cnt); press("ionOpts", S.ion ? 1 : 0); press("lifeOpts", S.lifeSel);
+  document.querySelectorAll("[data-best]").forEach(el => { const v = el.dataset.best, b = best[keyOf(/^\d$/.test(v) ? +v : v)]; el.textContent = b != null ? `最高 ★${b}` : ""; });
+  $("cnt-bm").textContent = bm.size ? `${bm.size} 問（レベル・イオン反応式の設定に関係なく出題）` : "まだ付せんをはった反応がありません";
+  $("lv-bm").disabled = !bm.size;
+  if (S.lv === "bm" && !bm.size) { S.lv = 0; press("lvOpts", S.lv); }
+  const n = pool().length;
+  const tail = `その中から ${cntN()} 問をランダムに出題します。`;
+  if (S.lv === "bm") $("poolNote").textContent = `付せんをはった反応は ${n} 問。${tail}`;
+  else { const ni = S.mode === "qty" ? "（量的関係モードでは、イオン反応式は出題しません）" : S.ion ? `（うちイオン反応式 ${ION_PROBLEMS[S.lv].length} 問）` : ""; $("poolNote").textContent = `${LV_NAME[S.lv]}は全 ${n} 問${ni}。${tail}`; }
+  $("startBtn").disabled = !n;
+}
+function toMenu() {
+  if (S.step === "game") recordCur();
+  S.step = "menu"; show("menu"); $("meta").hidden = true;
+  $("titleScreen").hidden = false; $("endScreen").hidden = true; $("talk").hidden = true;
+  scene.active = false; scene.fx = null;
+  renderMenu(); syncBm();
+  if (kb) $("startBtn").focus({ preventScroll: true });
+}
+function renderLife(hurt) {
+  const el = $("life");
+  el.innerHTML = Array.from({ length: S.maxLife }, (_, i) => `<i class="${i < S.life ? "" : "off"}">♥</i>`).join("");
+  el.setAttribute("aria-label", `ライフ ${S.life} / ${S.maxLife}`);
+  if (hurt) { el.classList.remove("hurt"); void el.offsetWidth; el.classList.add("hurt"); }
+}
+function start() {
+  S.set = shuffle(pool()).slice(0, cntN());
   S.res = S.set.map(() => null);
-  show("game");
+  S.maxLife = S.lifeSel; S.life = S.maxLife;
+  $("titleScreen").hidden = true; $("endScreen").hidden = true; $("meta").hidden = false;
+  S.step = "game"; show("gamePanel"); scene.active = true; applyModeUI();
+  renderLife(false);
   load(0);
 }
-
-/* ---------- ゲーム ---------- */
 function load(idx) {
   S.idx = idx;
+  if (S.mode === "qty") return loadQty(idx);
+  scene.qty = null;
   S.coefs = species(cur()).map(() => 1);
-  S.taps = 0; S.solved = false; S.shown = false;
+  S.taps = 0; S.miss = 0; S.solved = false; S.shown = false; S.sel = 0; S.recorded = -1;
+  $("bmBtn").dataset.bm = cur().id; syncBm();
+  scene.fx = null; scene.lamp = "off";
   renderGame();
+  if (kb) focusSel();
+  const p = cur();
+  const nm = `<b>${p.name}</b>`, sp = [...p.L, ...p.R];
+  let line;
+  if (idx === 0) line = pickLine("first", [
+    `さあ、実験をはじめるぞい。第1問は${nm}じゃ。両側の原子カウンターがそろうように、係数を合わせてくれんかのう。`,
+    `よく来たのう。まずは${nm}からじゃ。わしの原子カウンターの出番じゃぞ。`,
+    `準備はよいか？ 第1問は${nm}じゃ。左右の原子の数をよく見るのじゃぞ。`,
+  ]);
+  else if (idx === S.set.length - 1 && S.set.length > 1) line = pickLine("last", [
+    `いよいよ最後の問題じゃ。${nm}、しっかり合わせるのじゃぞ。`,
+    `これで最後じゃ。${nm}を合わせて、今日の実験をしめくくるのじゃ。`,
+  ]);
+  else {
+    const gen = [
+      `第${idx + 1}問は${nm}じゃ。両側の原子カウンターがそろうように、係数を合わせてくれんかのう。`,
+      `つぎは${nm}じゃ。左右の原子の数をよく見るのじゃぞ。`,
+      `${nm}の反応式じゃ。数の多い原子から合わせるとよいぞ。`,
+      `ほう、${nm}か。わしも若いころは、この実験に夢中になったもんじゃ。`,
+      `${nm}じゃな。一つの物質にしか出てこない原子から決めていくとよいぞ。`,
+      `お次は${nm}じゃ。あわてず、一つずつ数えるのじゃぞ。`,
+      `ふむ、${nm}じゃ。係数は最も簡単な整数比でたのむぞい。`,
+      `${nm}を合わせてみよ。わからなくなったら、すべて1に戻してやり直せばよいのじゃ。`,
+    ];
+    if (sp.some(f => /O/.test(f.split("^")[0]))) gen.push(`${nm}じゃ。O（酸素）はいろいろな物質に出てくるから、最後に合わせると楽なことが多いぞ。`);
+    if (p.L.includes("O2")) gen.push(`${nm}じゃな。O₂ の係数は、ほかを合わせてから最後に決めるのがコツじゃ。`);
+    line = pickLine("gen", gen);
+  }
+  if (p.ion) line += sp.includes("e^-") ? pickLine("e", ["電子 e⁻ の数で電荷を合わせるのがコツじゃ。", "半反応式は、原子をそろえてから e⁻ で電荷を合わせるのじゃぞ。"])
+    : pickLine("ion", ["電荷の合計もそろえるのじゃぞ。", "イオン反応式じゃから、電荷の合計も忘れるでないぞ。", "左右で電荷の合計も同じにするのじゃ。"]);
+  // ときどき助手が先に話す
+  if (idx > 0 && idx < S.set.length - 1 && Math.random() < .2) return say("app", pickLine("cApp", [
+    `博士、つぎは${nm}です！ 原子カウンター、準備オーケーです！`, `${nm}ですね。わたし、こういうの得意かも…！`,
+    `${nm}…むずかしそう。でも、がんばります！`, `博士、${nm}の試薬、もう用意してあります！`, "ゴーグル、よし！ 白衣、よし！ つぎの実験です！"]));
+  say("doc", line);
+  window.scrollTo({ top: 0, behavior: "auto" });
 }
 
 function tally() {
@@ -567,169 +1159,822 @@ function tally() {
   if (els.includes(CHARGE)) els.push(els.splice(els.indexOf(CHARGE), 1)[0]);
   return { els, L, R };
 }
+function judge() { const { els, L, R } = tally(); return { balanced: els.every(e => L[e] === R[e]), g: S.coefs.reduce(gcd) }; }
 
-function judge() {
+function updateScene() {
   const { els, L, R } = tally();
-  return { balanced: els.every(e => L[e] === R[e]), g: S.coefs.reduce(gcd) };
-}
-
-function stars() {
-  const opt = cur().a.reduce((s, v) => s + v - 1, 0);
-  if (S.taps <= opt) return 3;
-  if (S.taps <= opt * 1.5 + 2) return 2;
-  return 1;
+  scene.cols = els.filter(e => e !== CHARGE).map(e => ({ e, c: elCol(e), L: L[e], R: R[e] }));
+  const mx = Math.max(1, ...scene.cols.map(x => Math.max(x.L, x.R)));
+  scene.scale = Math.max(1, Math.ceil(mx / MAXB));
+  scene.hidden = !S.hint && !S.solved && !S.shown;
+  if (S.solved || S.shown) scene.lamp = "ok";
+  else if (S.hint) scene.lamp = judge().balanced ? "ok" : "off";
 }
 
 function renderEquation() {
-  const p = cur(), eq = $("equation"), lock = S.solved || S.shown;
+  const p = cur(), lock = S.solved || S.shown || S.life <= 0;
   const term = (f, j) => `
-    <div class="term" tabindex="0" data-j="${j}" aria-label="${f} の係数 ${S.coefs[j]}">
+    <div class="term${j === S.sel ? " sel" : ""}" tabindex="0" data-j="${j}" aria-label="${f.replace("^", "")} の係数 ${S.coefs[j]}">
       <div class="stepper">
-        <button type="button" data-j="${j}" data-d="1" aria-label="${f} の係数を増やす" ${S.coefs[j] >= MAX || lock ? "disabled" : ""}>△</button>
-        <span class="coef ${S.coefs[j] === 1 ? "one" : ""}" id="coef-${j}">${S.coefs[j]}</span>
-        <button type="button" data-j="${j}" data-d="-1" aria-label="${f} の係数を減らす" ${S.coefs[j] <= MIN || lock ? "disabled" : ""}>▽</button>
+        <button type="button" tabindex="-1" data-j="${j}" data-d="1" aria-label="係数を増やす" ${S.coefs[j] >= MAX || lock ? "disabled" : ""}>△</button>
+        <span class="coef ${S.res[S.idx] && S.res[S.idx].auto ? "auto" : S.coefs[j] === 1 ? "one" : ""}" id="coef-${j}">${S.coefs[j]}</span>
+        <button type="button" tabindex="-1" data-j="${j}" data-d="-1" aria-label="係数を減らす" ${S.coefs[j] <= MIN || lock ? "disabled" : ""}>▽</button>
       </div>
       <span class="formula">${fmt(f)}</span>
     </div>`;
-  const side = (arr, off) => `<div class="side">${arr.map((f, k) => (k ? '<span class="op">+</span>' : "") + term(f, k + off)).join("")}</div>`;
-  eq.innerHTML = side(p.L, 0) + '<span class="arrow" aria-label="反応して">⟶</span>' + side(p.R, p.L.length);
+  const side = (arr, off) => `<div class="sidegrp">${arr.map((f, k) => (k ? '<span class="op">+</span>' : "") + term(f, k + off)).join("")}</div>`;
+  $("eq").innerHTML = side(p.L, 0) + '<span class="arrow">⟶</span>' + side(p.R, p.L.length);
+  $("eq").classList.toggle("ok", S.solved);
 }
-
 function renderLedger() {
   const box = $("ledger");
-  if (!hintEl.checked) { box.innerHTML = '<div class="hidden-note">非表示中。自力で数えてみよう。</div>'; return; }
+  $("hintBtn").setAttribute("aria-pressed", String(S.hint));
+  $("hintBtn").textContent = S.hint ? "ヒント：表示中" : "ヒント：かくす";
+  if (!S.hint && !S.solved && !S.shown) { box.innerHTML = '<p class="hidden-note">原子カウンターに布をかけてある。自力で数えてみよう。</p>'; return; }
   const { els, L, R } = tally();
-  box.innerHTML = `<table><thead><tr><th style="text-align:left;padding-left:8px">原子</th><th>左辺</th><th>右辺</th><th>状態</th></tr></thead><tbody>${
+  box.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th style="text-align:left">原子</th><th>左辺</th><th>右辺</th><th>状態</th></tr></thead><tbody>${
     els.map(e => {
-      const ok = L[e] === R[e], q = e === CHARGE;
-      const st = ok ? '<span class="pill ok">一致</span>'
-        : q ? '<span class="pill ng">不一致</span>'
-        : `<span class="pill ng">${L[e] > R[e] ? "左が" : "右が"}${Math.abs(L[e] - R[e])}多い</span>`;
-      const v = n => q ? signed(n) : n;
-      return `<tr${q ? ' class="charge"' : ""}><td class="el">${e}</td><td class="n">${v(L[e])}</td><td class="n">${v(R[e])}</td><td>${st}</td></tr>`;
-    }).join("")}</tbody></table>`;
+      const ok = L[e] === R[e], q = e === CHARGE, v = n => q ? signed(n) : n;
+      const st = ok ? '<span class="pill ok">一致</span>' : q ? '<span class="pill ng">ずれ</span>' : `<span class="pill ng">${L[e] > R[e] ? "左" : "右"}が ${Math.abs(L[e] - R[e])} 多い</span>`;
+      const sw = q ? "" : `<i style="background:${elCol(e)}"></i>`;
+      return `<tr><td class="el">${sw}${e}</td><td class="n">${v(L[e])}</td><td class="n">${v(R[e])}</td><td>${st}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
 }
-
-function renderStatus() {
-  const st = $("status"), j = judge();
-  st.className = "status";
-  if (S.shown) { st.classList.add("warn"); st.textContent = "これが答えです。次の問題に進みましょう。"; return; }
-  if (S.solved) {
-    const n = S.res[S.idx].stars;
-    st.classList.add("ok");
-    st.innerHTML = `正解！ ${S.taps} タップでクリア<span class="stars" aria-label="星${n}つ">${"★".repeat(n)}${"☆".repeat(3 - n)}</span>`;
-    return;
-  }
-  if (j.balanced && j.g > 1) { st.classList.add("warn"); st.textContent = `原子の数${cur().ion ? "と電荷" : ""}はそろっています。全体を ${j.g} で割って、最も簡単な整数比にしよう。`; return; }
-  st.textContent = cur().ion ? "△▽ で係数を調整して、両辺の原子の数と電荷の合計をそろえよう。" : "△▽ で係数を調整して、両辺の原子の数をそろえよう。";
-}
-
-function total() { return S.res.reduce((s, r) => s + (r?.stars || 0), 0); }
-
-function renderProgress() {
-  $("progress").innerHTML = S.set.map((_, i) => {
-    const r = S.res[i];
-    const cls = ["dot", r?.stars ? "done" : r ? "shown" : "", i === S.idx ? "current" : ""].join(" ");
-    return `<span class="${cls}">${i + 1}</span>`;
-  }).join("") + `<span class="score">★ <b>${total()}</b> / ${S.set.length * 3}</span>`;
-}
-
 function renderMeta() {
-  const last = S.idx === S.set.length - 1;
-  $("session-label").textContent = `${LV_NAME[S.lv]}・${S.set.length}問${S.ion ? "・イオン反応式あり" : ""}`;
-  $("qno").textContent = `第 ${S.idx + 1} 問 / ${S.set.length}`;
+  $("qnum").textContent = `第 ${S.idx + 1} 問 / ${S.set.length}`;
+  $("score").textContent = `★ ${total()} / ${S.set.length * 3}`;
+  $("qno").textContent = `第 ${S.idx + 1} 問　${LV_NAME[cur().lv]}${cur().ion ? "・イオン反応式" : ""}`;
   $("qname").textContent = cur().name;
-  $("taps").textContent = `タップ数 ${S.taps}`;
-  $("btn-answer").disabled = S.solved || S.shown;
-  $("btn-reset").disabled = S.solved || S.shown;
-  $("btn-next").textContent = last ? "結果を見る →" : (S.solved || S.shown ? "次の問題 →" : "スキップ →");
+  $("taps").textContent = `タップ ${S.taps}${S.miss ? `　失敗 ${S.miss}` : ""}`;
+  const done = S.solved || S.shown || S.life <= 0;
+  $("playRow").hidden = done; $("nextRow").hidden = !done; $("askRow").hidden = done;
+  const last = S.idx + 1 >= S.set.length || S.life <= 0;
+  $("nextBtn").textContent = last ? "結果を見る ▶" : "つぎの問題へ ▶";
 }
+function renderGame() { renderEquation(); renderLedger(); renderMeta(); updateScene(); }
 
-function renderGame() { renderEquation(); renderLedger(); renderStatus(); renderProgress(); renderMeta(); }
+function setMsg(cls, html) { const m = $("msg"); m.className = "msg " + (cls || ""); m.innerHTML = html || ""; }
 
 function step(j, d) {
-  if (S.solved || S.shown) return;
+  if (S.solved || S.shown || S.life <= 0) return;
   const v = S.coefs[j] + d;
   if (v < MIN || v > MAX) return;
   S.coefs[j] = v; S.taps++;
-  const r = judge();
-  if (r.balanced && r.g === 1) { S.solved = true; S.res[S.idx] = { stars: stars(), taps: S.taps }; }
+  setMsg("", "");
   renderGame();
   const c = $("coef-" + j); if (c) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
 }
 
+function react() {
+  if (S.solved || S.shown || S.life <= 0) return;
+  const now = performance.now();
+  const { els, L, R } = tally(), j = judge();
+  if (j.balanced && j.g === 1) {
+    S.solved = true;
+    const stars = Math.max(1, 3 - S.miss);   // ★はまちがえたときだけ減る（タップ数では減らない）
+    S.res[S.idx] = { stars, taps: S.taps, miss: S.miss };
+    scene.fx = { ok: true, t0: now, until: now + 2600 };
+    renderGame();
+    setMsg("ok", `反応成功！${S.miss ? `（失敗 ${S.miss} 回）` : "（失敗なし）"}<span class="stars" aria-label="星${stars}つ">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</span>`);
+    say(stars === 3 ? "doc" : "app", stars === 3 ? pickLine("ok3", ["見事じゃ！ 原子カウンターがぴたりとそろったぞ。", "すばらしい！ むだのない合わせ方、わしの若いころそっくりじゃ。", "うむ、完ぺきじゃ！ わしの発明も喜んでおるわい。", "お見事！ この調子でつぎもたのむぞい。", "ほっほっ、迷いのない手つきじゃのう。"])
+      : stars === 2 ? pickLine("ok2", ["そろいました！ 博士、反応成功です！", "やった、カウンターが全部そろいました！", "反応成功です！ つぎは一発で決めます！", "見てください博士、ランプが緑です！", "よし！ 原子の数、ぴったりです！", "博士、いまの反応、記録しておきますね！"])
+      : pickLine("ok1", ["ふう、なんとかそろいました…！", "時間はかかったけど、成功です！", "やっとそろいました…。博士、ちゃんと見ててくれました？", "ゴーグルがくもるくらい集中しました…！", "あぶなかった…でも、成功は成功です！"]));
+    if (kb) $("nextBtn").focus();
+    return;
+  }
+  // 失敗
+  S.miss++; S.life--; renderLife(true);
+  const bad = els.filter(e => e !== CHARGE).map((e, i) => L[e] !== R[e] ? i : -1).filter(i => i >= 0);
+  scene.fx = { ok: false, bad, t0: now, until: now + 1400 };
+  scene.lamp = "ng";
+  setTimeout(() => { if (scene.lamp === "ng") { scene.lamp = "off"; updateScene(); } }, 1400);
+  let line;
+  if (j.balanced) {
+    const g = `<b>${j.g}</b>`;
+    line = pickLine("gcd", [
+      `原子${cur().ion ? "と電荷" : ""}はそろっておる。じゃが係数は全部 ${g} で割れるぞ。最も簡単な整数比にするのじゃ。`,
+      `おしい！ 係数がみんな ${g} で割り切れるぞ。もっと小さくできるはずじゃ。`,
+      `数はそろったが、${g} で約分できるのう。係数は最も簡単な整数比で書くのが決まりじゃ。`,
+    ]);
+    setMsg("ng", `失敗：全体を ${j.g} で割れる`);
+  } else {
+    const e = els.find(x => x !== CHARGE && L[x] !== R[x]);
+    if (e) { line = pickLine("el", [
+        `<b>${e}</b> が左 ${L[e]} 個・右 ${R[e]} 個。数がそろっておらんのじゃ。`,
+        `むむ、<b>${e}</b> が合っておらんぞ。左が ${L[e]} 個、右が ${R[e]} 個じゃ。`,
+        `カウンターを見てみよ。<b>${e}</b> の列が左 ${L[e]}・右 ${R[e]} でずれておる。`,
+        `あわてるでない。<b>${e}</b> は左 ${L[e]} 個に右 ${R[e]} 個じゃぞ。`,
+        `ざんねん、<b>${e}</b> の数がちがうのう。左 ${L[e]} 個、右 ${R[e]} 個じゃ。`,
+      ]); setMsg("ng", `失敗：${e} の数がそろっていない`); }
+    else { const l = signed(L[CHARGE]), r = signed(R[CHARGE]); line = pickLine("q", [
+        `原子はそろったが、<b>電荷</b>が左 ${l}・右 ${r}。合わせるのじゃぞ。`,
+        `原子はよいが、<b>電荷</b>が合わん。左 ${l}、右 ${r} じゃ。`,
+        `<b>電荷</b>の合計を確かめるのじゃ。左が ${l}、右が ${r} になっておる。`,
+      ]); setMsg("ng", "失敗：電荷の合計がそろっていない"); }
+  }
+  if (S.life <= 0) {
+    S.res[S.idx] = { failed: true };
+    line += pickLine("dead", [" …ライフが尽きてしもうたのう。", " …むう、今日の実験はここまでのようじゃ。"]);
+  }
+  else if (S.miss >= 3) {   // 同じ問題で3回まちがえたら、解答を出す
+    S.coefs = [...cur().a]; S.shown = true; S.res[S.idx] = { shown: true, auto: true };
+    line += pickLine("auto3", [" …3回まちがえたから、答えを見せるぞ。よく見ておくのじゃ。", " 3回目じゃな。今回は答えを見せよう。つぎは自分で合わせるのじゃぞ。", " ここまでじゃ。答えを見て、どこがちがったか確かめるのじゃ。"]);
+  }
+  else if (S.life === 1) line += pickLine("last1", [" ライフは残り1つじゃ、慎重にな。", " もうあとがないぞ、よく数えるのじゃ。"]);
+  say("doc", line);
+  renderGame();
+  if (autoFusen()) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">（付せんをはりました）</span>');
+  if (S.res[S.idx] && S.res[S.idx].auto) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">→ 3回まちがえたので、解答を表示しました（★なし）</span>');
+  if ((S.life <= 0 || S.shown) && kb) $("nextBtn").focus();
+}
+function askDoc() {
+  if (S.mode === "qty") return qtyAsk();
+  if (S.solved || S.shown || S.life <= 0) return;
+  S.coefs = [...cur().a]; S.shown = true; S.res[S.idx] = { shown: true };
+  scene.fx = null;
+  renderGame();
+  setMsg("ng", "答えを見た（★なし）");
+  const added = autoFusen();
+  if (added) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">（付せんをはりました）</span>');
+  $("nextBtn").focus({ preventScroll: true });
+  say("doc", pickLine("ask", [
+    "答えはこうじゃ。各原子の数を表でたしかめておくのじゃぞ。",
+    "よし、教えてやろう。この係数で原子の数を数えなおしてみるのじゃ。",
+    "これが正解じゃ。つぎに出てきたときは、自分の力で合わせるのじゃぞ。",
+    ...(added ? ["これが正解じゃ。付せんをはっておいたから、あとで復習するのじゃぞ。"] : []),
+  ]));
+}
+function next() {
+  if (!S.res[S.idx]) S.res[S.idx] = { skipped: true };
+  recordCur();
+  if (S.idx + 1 < S.set.length && S.life > 0) { setMsg("", ""); load(S.idx + 1); }
+  else finish();
+}
 function finish() {
-  const t = total(), max = S.set.length * 3, k = bestKey();
-  const isBest = best[k] == null || t > best[k];
-  if (isBest) { best[k] = t; store.set("keisu-best", best); }
-  const solved = S.res.filter(r => r?.stars).length;
-  $("result-label").textContent = `${LV_NAME[S.lv]}・${S.set.length}問${S.ion ? "・イオン反応式あり" : ""}`;
-  $("result-score").innerHTML = `★${t}<small> / ${max}</small>`;
-  $("result-msg").textContent = `${S.set.length}問中 ${solved}問を自力で正解しました。` + (isBest && t > 0 ? " 自己ベストを更新！" : "");
-  $("result-list").innerHTML = S.set.map((p, i) => {
+  S.step = "end";
+  const t = total(), max = S.set.length * 3, k = keyOf(S.lv), out = S.life <= 0;
+  const isBest = !out && (best[k] == null || t > best[k]);
+  if (isBest) { best[k] = t; store.set("keisu.best", best); }
+  const solved = S.res.filter(r => r && r.stars).length, pct = t / max;
+  const rank = pct >= .9 ? ["S", "博士級の腕前"] : pct >= .7 ? ["A", "主任研究員"] : pct >= .5 ? ["B", "研究員"] : ["C", "見習い研究員"];
+  $("endBig").textContent = out ? "実験中止" : "実験終了";
+  $("endRank").innerHTML = out ? `ライフが尽きた　★ ${t} / ${max}` : `ランク <b>${rank[0]}</b>　${rank[1]}`;
+  $("endMsg").textContent = `${S.set.length} 問中 ${solved} 問を自力で解いた。★ ${t} / ${max}` + (isBest && t > 0 ? "　自己ベスト更新！" : "");
+  $("endScreen").hidden = false; $("talk").hidden = true; scene.fx = null;
+  $("review").innerHTML = S.set.map((p, i) => {
     const r = S.res[i];
-    const st = r?.stars ? `<span class="st">${"★".repeat(r.stars)}${"☆".repeat(3 - r.stars)}</span>`
-      : `<span class="st skip">${r?.shown ? "答えを見た" : "スキップ"}</span>`;
-    return `<li><span class="nm">${i + 1}. ${p.name}</span>${st}</li>`;
+    const st = r && r.stars ? `<span class="st">${"★".repeat(r.stars)}${"☆".repeat(3 - r.stars)}</span>`
+      : `<span class="st skip">${!r ? "未挑戦" : r.shown ? (r.auto ? "3回まちがえて解答" : "答えを見た") : r.failed ? "ライフ切れ" : "とばした"}</span>`;
+    return `<li><span class="nm">${i + 1}. ${p.name}</span>${st}<button class="bmbtn" type="button" data-bm="${p.id}"></button></li>`;
   }).join("");
-  show("result");
+  $("meta").hidden = true;
+  show("reviewPanel"); syncBm();
+  setTimeout(() => (out ? say("doc", pickLine("endOut", ["今日はここまでじゃ。まちがえた式を見直しておくのじゃぞ。", "失敗は発明の母じゃ。付せんをはった式からやり直してみるとよいぞ。", "ライフが尽きたか。なに、何度でも挑戦すればよいのじゃ。"]))
+    : pct >= .9 ? say("doc", pickLine("endS", ["ほっほっ、見事な腕前じゃ！ さすがはわしの助手じゃのう。", "すばらしい！ もはや係数合わせの博士じゃのう。"]))
+    : pct >= .7 ? say("app", pickLine("endA", ["博士、今日の実験はぜんぶ記録しました！", "けっこううまくいきました！ つぎはランクSをめざします！", "いい調子でした！ 実験ノート、もう少しで埋まりそうです！", "博士にほめてもらえるまで、もうひと息です！"]))
+    : say("doc", pickLine("endC", ["よくがんばったのう。付せんの式をもう一度やってみるのじゃ。", "おつかれさん。数の多い原子から合わせるのを意識してみるとよいぞ。", "最初はだれでもむずかしいもんじゃ。くり返せば必ず上達するぞい。"]))), reduceMotion ? 0 : 400);
+  $("retryBtn").focus();
 }
 
-/* 長押しで連続変化 */
+// --- 入力 ---
+// =========================================================
+// 量的関係モード：係数の比（＝物質量の比）から、物質量・個数・気体の体積を求める
+// =========================================================
+// [名前, 種類]  g＝標準状態で気体  m＝分子からなる物質  a＝原子1個を単位に数える単体  i＝イオン結晶など（個数は問わない）
+const SUB = {
+  H2: ["水素", "g"], O2: ["酸素", "g"], N2: ["窒素", "g"], Cl2: ["塩素", "g"], O3: ["オゾン", "g"], NH3: ["アンモニア", "g"], HCl: ["塩化水素", "g"], HBr: ["臭化水素", "g"],
+  H2S: ["硫化水素", "g"], CO: ["一酸化炭素", "g"], CO2: ["二酸化炭素", "g"], NO: ["一酸化窒素", "g"], NO2: ["二酸化窒素", "g"], SO2: ["二酸化硫黄", "g"], SiF4: ["四フッ化ケイ素", "g"],
+  CH4: ["メタン", "g"], C2H6: ["エタン", "g"], C3H8: ["プロパン", "g"], C4H10: ["ブタン", "g"], C2H4: ["エチレン", "g"], C2H2: ["アセチレン", "g"],
+  H2O: ["水", "m"], H2O2: ["過酸化水素", "m"], SO3: ["三酸化硫黄", "m"], HF: ["フッ化水素", "m"], Br2: ["臭素", "m"], I2: ["ヨウ素", "m"], P4: ["黄リン", "m"], P4O10: ["十酸化四リン", "m"],
+  H2SO4: ["硫酸", "m"], HNO3: ["硝酸", "m"], H3PO4: ["リン酸", "m"], CH3COOH: ["酢酸", "m"], "(COOH)2": ["シュウ酸", "m"], CH3OH: ["メタノール", "m"], C2H5OH: ["エタノール", "m"],
+  C6H12O6: ["グルコース", "m"], C12H22O11: ["スクロース", "m"], C6H6: ["ベンゼン", "m"], C5H12: ["ペンタン", "m"], C6H14: ["ヘキサン", "m"], C7H16: ["ヘプタン", "m"], C9H20: ["ノナン", "m"],
+  Mg: ["マグネシウム", "a"], Cu: ["銅", "a"], Na: ["ナトリウム", "a"], Fe: ["鉄", "a"], Ag: ["銀", "a"], Ca: ["カルシウム", "a"], Al: ["アルミニウム", "a"], Zn: ["亜鉛", "a"],
+  C: ["炭素", "a"], S: ["硫黄", "a"], P: ["リン", "a"], Si: ["ケイ素", "a"],
+  MgO: ["酸化マグネシウム", "i"], CuO: ["酸化銅(II)", "i"], Na2O: ["酸化ナトリウム", "i"], Fe3O4: ["四酸化三鉄", "i"], Fe2O3: ["酸化鉄(III)", "i"], FeO: ["酸化鉄(II)", "i"], NaCl: ["塩化ナトリウム", "i"],
+  KClO3: ["塩素酸カリウム", "i"], KCl: ["塩化カリウム", "i"], Ag2O: ["酸化銀", "i"], NaOH: ["水酸化ナトリウム", "i"], "Ca(OH)2": ["水酸化カルシウム", "i"], MgCl2: ["塩化マグネシウム", "i"], FeCl2: ["塩化鉄(II)", "i"],
+  Na2SO4: ["硫酸ナトリウム", "i"], CaCl2: ["塩化カルシウム", "i"], Na2CO3: ["炭酸ナトリウム", "i"], Al2O3: ["酸化アルミニウム", "i"], CaO: ["酸化カルシウム", "i"], ZnSO4: ["硫酸亜鉛", "i"],
+  CaCO3: ["炭酸カルシウム", "i"], KOH: ["水酸化カリウム", "i"], "Ba(OH)2": ["水酸化バリウム", "i"], BaCl2: ["塩化バリウム", "i"], "Ca(NO3)2": ["硝酸カルシウム", "i"], NH4Cl: ["塩化アンモニウム", "i"],
+  NH4NO3: ["硝酸アンモニウム", "i"], CH3COONa: ["酢酸ナトリウム", "i"], "(CH3COO)2Ca": ["酢酸カルシウム", "i"], ZnO: ["酸化亜鉛", "i"], "Ca3(PO4)2": ["リン酸カルシウム", "i"],
+  "Ca(H2PO4)2": ["リン酸二水素カルシウム", "i"], CaSO4: ["硫酸カルシウム", "i"], SiO2: ["二酸化ケイ素", "i"], NH4NO2: ["亜硝酸アンモニウム", "i"], ZnCl2: ["塩化亜鉛", "i"], AlCl3: ["塩化アルミニウム", "i"],
+  "Al2(SO4)3": ["硫酸アルミニウム", "i"], "Na[Al(OH)4]": ["テトラヒドロキシドアルミン酸ナトリウム", "i"], NaHCO3: ["炭酸水素ナトリウム", "i"], "(NH4)2SO4": ["硫酸アンモニウム", "i"], CaC2: ["炭化カルシウム", "i"],
+  Na2SiO3: ["ケイ酸ナトリウム", "i"], Ag2SO4: ["硫酸銀", "i"], FeS2: ["二硫化鉄（黄鉄鉱）", "i"], MnO2: ["酸化マンガン(IV)", "i"], MnCl2: ["塩化マンガン(II)", "i"], "Ca(ClO)2": ["次亜塩素酸カルシウム", "i"],
+  NaClO: ["次亜塩素酸ナトリウム", "i"], "Cu(NO3)2": ["硝酸銅(II)", "i"], AgNO3: ["硝酸銀", "i"], CuSO4: ["硫酸銅(II)", "i"], KMnO4: ["過マンガン酸カリウム", "i"], FeSO4: ["硫酸鉄(II)", "i"], K2SO4: ["硫酸カリウム", "i"],
+  MnSO4: ["硫酸マンガン(II)", "i"], "Fe2(SO4)3": ["硫酸鉄(III)", "i"], K2Cr2O7: ["二クロム酸カリウム", "i"], "Cr2(SO4)3": ["硫酸クロム(III)", "i"], KI: ["ヨウ化カリウム", "i"], Na2S2O3: ["チオ硫酸ナトリウム", "i"],
+  Na2S4O6: ["テトラチオン酸ナトリウム", "i"], NaI: ["ヨウ化ナトリウム", "i"], H2SiF6: ["ヘキサフルオロケイ酸", "i"],
+};
+const NAV = 6.0e23, VM = 22.4;
+const N_CHOICES = ["0.10", "0.20", "0.25", "0.30", "0.40", "0.50", "0.60", "0.75", "0.80", "1.0", "1.2", "1.5", "2.0", "2.5", "3.0", "4.0", "5.0", "0.050", "0.020"];
+const kindOf = f => (SUB[f] || [])[1];
+const canV = f => kindOf(f) === "g";
+const canN = f => ["g", "m", "a"].includes(kindOf(f));
+const ptcl = f => kindOf(f) === "a" ? "原子" : "分子";
+const subName = f => `${SUB[f][0]} ${fmt(f)}`;
+const QUNIT = { n: "mol", m: "g", N: "個", V: "L" };
+const exactP = (x, sig) => Math.abs(+x.toPrecision(sig) - x) <= 1e-9 * Math.abs(x);
+const num3 = x => String(Number(x.toPrecision(3)));
+function sciParts(x, sig = 2) {
+  let e = Math.floor(Math.log10(Math.abs(x))), m = +(x / 10 ** e).toPrecision(sig);
+  if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+  return { m: m.toFixed(sig - 1), e };
+}
+const sciHtml = (x, sig = 2) => { const p = sciParts(x, sig); return `${p.m}×10<sup>${p.e}</sup>`; };
+const fmtAny = x => (x !== 0 && (Math.abs(x) >= 1e5 || Math.abs(x) < 1e-3)) ? sciHtml(x, 3) : String(Number(x.toPrecision(4)));
+// 有効数字：2けたで表せるときは 2 けた（1.0、0.50 など）、そうでなければ 3 けた
+const fmtSig = x => (x < 100 && exactP(x, 2)) ? x.toPrecision(2) : num3(x);
+const qtyHtml = (k, x) => k === "N" ? sciHtml(x, 2) : fmtSig(x);
+// 原子量（教科書でよく使う値）とモル質量
+const AW = { H: 1.0, C: 12, N: 14, O: 16, F: 19, Na: 23, Mg: 24, Al: 27, Si: 28, P: 31, S: 32, Cl: 35.5, K: 39, Ca: 40, Cr: 52, Mn: 55, Fe: 56, Cu: 64, Zn: 65, Br: 80, Ag: 108, I: 127, Ba: 137 };
+const molarMass = f => { const c = parseFormula(f); return +Object.entries(c).reduce((t, [e, k]) => t + AW[e] * k, 0).toFixed(1); };
+const awText = e => e === "H" ? "1.0" : String(AW[e]);
+function mExpr(f) {   // モル質量の求め方（解説用）
+  const c = parseFormula(f), parts = Object.entries(c).map(([e, k]) => k === 1 ? awText(e) : `${awText(e)}×${k}`), M = molarMass(f);
+  return Object.keys(c).length === 1 && Object.values(c)[0] === 1 ? `${fmt(f)} の原子量は ${M} なので、モル質量は ${M} g/mol`
+    : `${fmt(f)} の${kindOf(f) === "i" ? "式量" : "分子量"} = ${parts.join(" + ")} = ${M} なので、モル質量は ${M} g/mol`;
+}
+// その反応式で作れる問題の組み合わせ（与える物質 xi・量 from、求める物質 yi・量 to、与える物質量 ns）
+// 量：n 物質量、m 質量、N 個数、V 気体の体積
+function qtyPairs(p) {
+  const sp = [...p.L, ...p.R], out = [];
+  sp.forEach((X, xi) => sp.forEach((Y, yi) => {
+    if (xi === yi) return;
+    const MX = molarMass(X), MY = molarMass(Y);
+    const froms = ["n", "m", ...(canN(X) ? ["N"] : []), ...(canV(X) ? ["V"] : [])], tos = ["n", "m", ...(canN(Y) ? ["N"] : []), ...(canV(Y) ? ["V"] : [])];
+    froms.forEach(from => tos.forEach(to => N_CHOICES.forEach(ns => {
+      if (from !== to && from !== "n" && to !== "n") return;   // 同じ単位どうしか、条件か解答のどちらかが物質量
+      const nx = +ns, ny = nx * p.a[yi] / p.a[xi];
+      if (!exactP(ny, 3) || ny < 0.01) return;
+      if (from === "V" && !exactP(nx * VM, 3)) return;
+      if (from === "N" && !exactP(nx * 6, 2)) return;
+      if (from === "m" && !exactP(nx * MX, 3)) return;
+      if (to === "V" && !exactP(ny * VM, 3)) return;
+      if (to === "N" && !exactP(ny * 6, 2)) return;
+      if (to === "m" && !exactP(ny * MY, 3)) return;
+      out.push({ xi, yi, from, to, ns });
+    })));
+  }));
+  return out;
+}
+const QTY_ABLE = new Set(ALL.filter(p => !p.ion && [...p.L, ...p.R].every(f => SUB[f]) && qtyPairs(p).length).map(p => p.id));
+function makeQty(p) {
+  const all = qtyPairs(p), nL = p.L.length, sp = [...p.L, ...p.R];
+  const prodY = all.filter(c => c.yi >= nL);
+  let base = prodY.length && Math.random() < .75 ? prodY : all;
+  const nonNN = base.filter(c => c.from !== "n" || c.to !== "n");   // 「mol → mol」だけにかたよらないように
+  if (nonNN.length && Math.random() < .75) base = nonNN;
+  const keys = [...new Set(base.map(c => c.from + c.to))];
+  const key = keys[Math.floor(Math.random() * keys.length)];
+  const cs = base.filter(c => c.from + c.to === key), c = cs[Math.floor(Math.random() * cs.length)];
+  const X = sp[c.xi], Y = sp[c.yi], aX = p.a[c.xi], aY = p.a[c.yi], nx = +c.ns, ny = nx * aY / aX, MX = molarMass(X), MY = molarMass(Y);
+  let given, gH;
+  if (c.from === "n") { given = nx; gH = c.ns; }
+  if (c.from === "V") { given = +num3(nx * VM); gH = String(given); }
+  if (c.from === "m") { given = +num3(nx * MX); gH = String(given); }
+  if (c.from === "N") { const s = sciParts(nx * NAV); given = +s.m * 10 ** s.e; gH = sciHtml(given); }
+  const ans = c.to === "n" ? ny : c.to === "V" ? ny * VM : c.to === "m" ? ny * MY : ny * NAV;
+  const v = h => `<span class="v">${h}</span>`;
+  const amt = { n: v(gH + " mol"), m: v(gH + " g"), V: `標準状態で ${v(gH + " L")}`, N: v(gH + " 個") }[c.from];
+  const xr = c.xi < nL, yr = c.yi < nL;
+  const ask = { n: "物質量は何 mol か。", m: "質量は何 g か。", V: "体積は、標準状態で何 L か。", N: `${ptcl(Y)}の数は何個か。` }[c.to];
+  const text = `${subName(X)}${c.from === "N" ? `（${ptcl(X)}）` : ""} が ${amt} ${xr ? "反応した" : "生成した"}。このとき${xr === yr ? (yr ? "反応した" : "同時に生成した") : (yr ? "反応した" : "生成した")}${subName(Y)}の${ask}`;
+  const steps = [];
+  const fx = fmt(X), fy = fmt(Y);
+  if (c.from === "m") { steps.push(mExpr(X)); steps.push(`${fx} の物質量 = ${gH} g ÷ ${MX} g/mol = <b>${fmtSig(nx)} mol</b>`); }
+  if (c.from === "V") steps.push(`${fx} の物質量 = ${gH} L ÷ 22.4 L/mol = <b>${fmtSig(nx)} mol</b>`);
+  if (c.from === "N") steps.push(`${fx} の物質量 = ${gH} 個 ÷ 6.0×10<sup>23</sup> /mol = <b>${fmtSig(nx)} mol</b>`);
+  steps.push(`係数の比 ${fx} : ${fy} = ${aX} : ${aY} は、物質量の比を表すので、${fy} の物質量 = ${fmtSig(nx)} mol × ${aY}/${aX} = <b>${fmtSig(ny)} mol</b>`);
+  if (c.to === "m") { if (c.from !== "m" || X !== Y) steps.push(mExpr(Y)); steps.push(`${fy} の質量 = ${fmtSig(ny)} mol × ${MY} g/mol = <b>${fmtSig(ans)} g</b>`); }
+  if (c.to === "V") steps.push(`${fy} の体積 = ${fmtSig(ny)} mol × 22.4 L/mol = <b>${fmtSig(ans)} L</b>`);
+  if (c.to === "N") steps.push(`${fy} の${ptcl(Y)}の数 = ${fmtSig(ny)} mol × 6.0×10<sup>23</sup> /mol = <b>${sciHtml(ans)} 個</b>`);
+  // 質量を使う問題では、使う原子量を問題の下に示す
+  const els = [...new Set([...(c.from === "m" ? Object.keys(parseFormula(X)) : []), ...(c.to === "m" ? Object.keys(parseFormula(Y)) : [])])];
+  const aw = els.length ? `原子量：${els.map(e => `${e} = ${awText(e)}`).join("、")}` : "";
+  return { xi: c.xi, yi: c.yi, from: c.from, to: c.to, nx, ny, given, MX, MY, text, aw, ans, steps, ansHtml: `${qtyHtml(c.to, ans)} ${QUNIT[c.to]}`, aX, aY };
+}
+function isCorrect(user, exact) {
+  if (user === null || !isFinite(user) || user <= 0) return false;
+  if (Math.abs(user - exact) / exact <= 0.02) return true;
+  for (const sig of [2, 3]) { const r = +exact.toPrecision(sig); if (Math.abs(user - r) / r < 1e-9) return true; }
+  return false;
+}
+// ---------- 電卓（モル計算クエストと同じしくみ） ----------
+// 式は文字列（数字 . + - * / ( ) と、×10^ を表す E）で持ち、カーソル位置に入力する
+function evaluate(s) {
+  let i = 0;
+  const number = () => {
+    const st = i; while (/[\d.]/.test(s[i] || "")) i++;
+    const m = s.slice(st, i); if (!m || m === "." || (m.match(/\./g) || []).length > 1) throw 0;
+    let v = parseFloat(m);
+    if (s[i] === "E") { i++; let sign = 1; if (s[i] === "-") { sign = -1; i++; } else if (s[i] === "+") i++; const st2 = i; while (/\d/.test(s[i] || "")) i++; if (st2 === i) throw 0; v *= 10 ** (sign * parseInt(s.slice(st2, i), 10)); }
+    return v;
+  };
+  const factor = () => { if (s[i] === "-") { i++; return -factor(); } if (s[i] === "+") { i++; return factor(); } if (s[i] === "(") { i++; const v = expr(); if (s[i] === ")") i++; return v; } return number(); };
+  const term = () => { let v = factor(); while (s[i] === "*" || s[i] === "/") { const op = s[i++]; const r = factor(); v = op === "*" ? v * r : v / r; } return v; };
+  const expr = () => { let v = term(); while (s[i] === "+" || s[i] === "-") { const op = s[i++]; const r = term(); v = op === "+" ? v + r : v - r; } return v; };
+  try { if (!s) return null; const v = expr(); return i === s.length && isFinite(v) ? v : null; } catch (e) { return null; }
+}
+const qDone = () => S.solved || S.shown || S.life <= 0;
+function exprView() {
+  const s = S.expr, cursor = S.cursor, wrapStart = new Set(), wrapEnd = new Set();
+  for (const m of s.matchAll(/\/([\d.]+E[-+]?\d*)/g)) { wrapStart.add(m.index + 1); wrapEnd.add(m.index + 1 + m[1].length); }
+  const CARET = qDone() ? "" : '<span class="caret"></span>', OP = { "*": "×", "/": "÷", "-": "−" };
+  let h = "", inSup = false, supN = 0;
+  for (let i = 0; i <= s.length; i++) {
+    const c = s[i], expChar = inSup && c !== undefined && (/\d/.test(c) || (/[-+]/.test(c) && s[i - 1] === "E"));
+    let caretDone = false;
+    if (inSup && !expChar) { if (cursor === i) { h += CARET; caretDone = true; } if (!supN) h += '<span class="ph">□</span>'; h += "</sup>"; inSup = false; }
+    if (wrapEnd.has(i)) h += '<span class="paren">)</span>';
+    if (cursor === i && !caretDone) h += CARET;
+    if (i === s.length) break;
+    if (wrapStart.has(i)) h += '<span class="paren">(</span>';
+    if (c === "E") { h += `<span class="ch" data-i="${i}">×10</span><sup>`; inSup = true; supN = 0; }
+    else { if (inSup) supN++; h += `<span class="ch" data-i="${i}">${OP[c] || c}</span>`; }
+  }
+  return h;
+}
+function calcPress(k) {
+  if (qDone()) return;
+  let cursor = Math.max(0, Math.min(S.cursor, S.expr.length));
+  let before = S.expr.slice(0, cursor); const after = S.expr.slice(cursor);
+  const last = before.slice(-1), next1 = after[0] || "", inExp = /E[-+]?\d*$/.test(before);
+  let ins = "";
+  const set = (e, c) => { S.expr = e; S.cursor = c; renderCalc(); };
+  if (k === "C") return set("", 0);
+  if (k === "L") return set(S.expr, Math.max(0, cursor - 1));
+  if (k === "R") return set(S.expr, Math.min(S.expr.length, cursor + 1));
+  if (k === "HOME") return set(S.expr, 0);
+  if (k === "END") return set(S.expr, S.expr.length);
+  if (k === "BS") return cursor > 0 ? set(before.slice(0, -1) + after, cursor - 1) : undefined;
+  if (k === "DEL") return set(before + after.slice(1), cursor);
+  const joinL = /[\d.)]/.test(last) ? "*" : "", joinR = /^[\d.(]/.test(next1) ? "*" : "";
+  if (k === "NA") ins = joinL + "6.0E23" + joinR;
+  else if (k === "VM") ins = joinL + "22.4" + joinR;
+  else if (k === "E") {
+    if (/E[-+]?\d*$/.test(before)) return;
+    const mantR = after.match(/^[\d.]*/)[0]; if (after[mantR.length] === "E") return;
+    if (/[\d.]\*10$/.test(before)) { before = before.slice(0, -3); ins = "E"; }
+    else if (/[\d.]\*$/.test(before)) { before = before.slice(0, -1); ins = "E"; }
+    else if (/(^|[^\d.])10$/.test(before)) { before = before.slice(0, -2); ins = "1E"; }
+    else if (/[\d.]$/.test(before)) ins = "E"; else ins = "1E";
+  } else if (k === ".") {
+    if (inExp) return;
+    const left = before.match(/[\d.]*$/)[0], right = after.match(/^[\d.]*/)[0];
+    if ((left + right).includes(".")) return; ins = left ? "." : "0.";
+  } else if (/\d/.test(k)) ins = k;
+  else if (k === "-" && last === "E") ins = "-";
+  else if ("+-*/".includes(k)) {
+    if (last === "E" || last === "(" && k !== "-") return;
+    if (last && "+-*/".includes(last)) { if (!(k === "-" && (last === "*" || last === "/"))) { before = before.slice(0, -1); } }
+    else if (!before && k !== "-") return;
+    ins = k;
+  } else if (k === "(") ins = joinL + "(";
+  else if (k === ")") { const open = (before.match(/\(/g) || []).length - (before.match(/\)/g) || []).length; if (open > 0 && /[\d.)]/.test(last)) ins = ")"; }
+  if (!ins || before.length + ins.length + after.length > 60) return;
+  set(before + ins + after, before.length + ins.length);
+}
+function renderCalc() {
+  $("expr").innerHTML = S.expr ? exprView() : (qDone() ? "" : '<span class="caret"></span>') + '<span class="zero">0</span>';
+  const v = evaluate(S.expr), u = S.q ? QUNIT[S.q.to] : "";
+  $("preview").innerHTML = !S.expr ? "式を入力すると計算結果が出ます" : v === null ? "式が途中です" : `= <b>${fmtAny(v)}</b> ${u}`;
+  $("ansUnit").textContent = u;
+  document.querySelectorAll("#keys .key").forEach(b => b.disabled = qDone());
+}
+const SP_COL = ["#e5384f", "#3f6fd8", "#62c44c", "#f2d43a", "#a466e0", "#e07a2a", "#4ab0a0"];
+function loadQty(idx) {
+  const p = cur();
+  S.q = makeQty(p); S.expr = ""; S.cursor = 0; S.flowT = null;
+  S.taps = 0; S.miss = 0; S.solved = false; S.shown = false; S.recorded = -1;
+  $("bmBtn").dataset.bm = p.id; syncBm();
+  scene.fx = null; scene.lamp = "off";
+  setMsg("", "");
+  renderQty();
+  window.scrollTo({ top: 0, behavior: "auto" });
+  const nm = `<b>${p.name}</b>`;
+  if (idx > 0 && idx < S.set.length - 1 && Math.random() < .25) return say("app", pickLine("qApp", [
+    `博士、つぎは${nm}の計算ですね！`, `${nm}…教科書で見たことあります！`, "係数の比、係数の比…よし、いけます！", `${nm}の反応、どれくらいの量ができるんでしょう？`]));
+  say("doc", idx === 0 ? pickLine("qFirst", [`さあ、計算の実験じゃ。まずは${nm}じゃ。係数の比は、物質量の比じゃぞ。`, `よく来たのう。今日は${nm}から量を求めてみるのじゃ。`])
+    : idx === S.set.length - 1 && S.set.length > 1 ? pickLine("qLast", [`最後の問題じゃ。${nm}の量を、しっかり求めるのじゃぞ。`, `これで最後じゃ。${nm}、物質量を中心に考えるのじゃ。`])
+    : pickLine("qGen", [
+      `${nm}の反応じゃ。係数の比は、物質量の比じゃぞ。`,
+      `この反応式を見よ。係数の比を使えば、どんな量も求められるのじゃ。`,
+      `${nm}じゃな。まずは与えられた量を物質量（mol）に直すのがコツじゃ。`,
+      `求める物質と与えられた物質の係数を、よく見比べるのじゃぞ。`,
+      `${nm}じゃ。気体なら 22.4、個数なら 6.0×10²³ じゃったな。`,
+    ]));
+}
+function renderQty() {
+  const p = cur(), q = S.q, done = qDone(), last = S.idx + 1 >= S.set.length || S.life <= 0;
+  $("qnum").textContent = `第 ${S.idx + 1} 問 / ${S.set.length}`;
+  $("score").textContent = `★ ${total()} / ${S.set.length * 3}`;
+  $("qno").textContent = `第 ${S.idx + 1} 問　${LV_NAME[p.lv]}・量的関係`;
+  $("qname").textContent = p.name;
+  $("taps").textContent = S.miss ? `失敗 ${S.miss}` : "";
+  $("qEq").innerHTML = eqHtml(p);
+  $("qText").innerHTML = q.text;
+  $("qAw").textContent = q.aw || ""; $("qAw").hidden = !q.aw;
+  $("qPlayRow").hidden = done; $("nextRow").hidden = !done; $("askRow").hidden = done;
+  $("nextBtn").textContent = last ? "結果を見る ▶" : "つぎの問題へ ▶";
+  $("qExplain").hidden = !done;
+  if (done) $("qExplain").innerHTML = `<p class="qans">答え：${q.ansHtml}</p><p class="qeq px${S.res[S.idx] && S.res[S.idx].auto ? " auto" : ""}">${eqHtml(p)}</p><ol class="steps">${q.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+  renderCalc();
+  const nL = p.L.length, mk = j => j === q.xi ? "x" : j === q.yi ? "y" : "";
+  scene.qty = { from: q.from, to: q.to, aX: q.aX, aY: q.aY, cx: "#ffd23f", cy: "#6fd3ff", flowT: done ? (S.flowT || performance.now()) : null };
+  if (done && !S.flowT) S.flowT = scene.qty.flowT;
+  scene.hidden = false;
+  if (done) scene.lamp = S.solved ? "ok" : "off";
+}
+// まちがいの診断：ありがちなまちがい方で計算した値と、入力した値をくらべる
+// 正解と同じ値になるまちがい方（係数が同じ・単位も同じときの「数字そのまま」など）は、正解あつかいになるので使わない
+function diagnose(v, q, p) {
+  const CX = { n: 1, V: VM, N: NAV, m: q.MX }, CY = { n: 1, V: VM, N: NAV, m: q.MY };
+  const sp = [...p.L, ...p.R], X = fmt(sp[q.xi]), Y = fmt(sp[q.yi]);
+  const starts = [{ n: q.nx, e: [] }];
+  if (q.from !== "n") { starts.push({ n: q.given, e: ["startRaw"] }); starts.push({ n: q.given * CX[q.from], e: ["startInv"] });
+    if (q.from === "m" && q.MX !== q.MY) starts.push({ n: q.given / q.MY, e: ["molarX"] }); }
+  const ratios = [{ r: q.aY / q.aX, e: [] }];
+  if (q.aX !== q.aY) { ratios.push({ r: q.aX / q.aY, e: ["ratioInv"] }); ratios.push({ r: 1, e: ["ratioNone"] }); }
+  const ends = [{ f: CY[q.to], e: [] }];
+  ["n", "m", "V", "N"].forEach(u => { if (u !== q.to) ends.push({ f: CY[u], e: ["unit:" + u] }); });
+  if (q.to !== "n") ends.push({ f: 1 / CY[q.to], e: ["endInv"] });
+  if (q.to === "m" && q.MX !== q.MY) ends.push({ f: q.MX, e: ["molarY"] });
+  const near = (a, b) => Math.abs(a - b) / Math.abs(b) <= 0.02;
+  let best = null;
+  starts.forEach(st => ratios.forEach(ra => ends.forEach(en => {
+    const errs = [...st.e, ...ra.e, ...en.e]; if (!errs.length) return;
+    const val = st.n * ra.r * en.f;
+    if (near(val, q.ans)) return;   // 正解と同じ値になるまちがい方は使わない
+    if (near(v, val) && (!best || errs.length < best.length)) best = errs;
+  })));
+  if (!best) {   // けたのまちがい（10 の n 乗のずれ）
+    const k = Math.round(Math.log10(v / q.ans));
+    if (k && near(v, q.ans * 10 ** k)) best = ["digits"];
+  }
+  if (!best) return null;
+  const U = { n: "物質量（mol）", m: "質量（g）", V: "体積（L）", N: "個数" };
+  const HOW = { V: "22.4", N: "6.0×10²³", m: "モル質量" };
+  const MSG = {
+    startRaw: `最初に、${{ V: "体積", N: "個数", m: "質量" }[q.from]}を物質量に直すのじゃ。${HOW[q.from]}で割るのじゃぞ。`,
+    startInv: `${{ V: "体積", N: "個数", m: "質量" }[q.from]}から物質量に直すときは、${HOW[q.from]}で<b>割る</b>のじゃ。かけてはいかんぞ。`,
+    molarX: `${X} の物質量を求めるときは、${X} のモル質量（${q.MX} g/mol）で割るのじゃ。`,
+    molarY: `${Y} の質量に直すときは、${Y} のモル質量（${q.MY} g/mol）をかけるのじゃ。`,
+    ratioInv: `係数の比が逆になっておるぞ。${Y} の物質量 ＝ ${X} の物質量 × ${q.aY}/${q.aX} じゃ。`,
+    ratioNone: `係数の比をかけ忘れておらんか？ ${X} : ${Y} ＝ ${q.aX} : ${q.aY} じゃ。`,
+    endInv: `物質量から${{ V: "体積", N: "個数", m: "質量" }[q.to]}に直すときは、${HOW[q.to]}を<b>かける</b>のじゃ。`,
+    digits: "数字はよいが、けたがちがうのう。10 の何乗か確かめるのじゃ。",
+  };
+  const unitMsg = u => q.to === "n" ? `求めるのは物質量じゃぞ。${u === "N" ? "個数まで計算しておらんか？" : `${U[u]}ではないぞ。`}`
+    : u === "n" ? `それは物質量のままじゃな。${HOW[q.to]}をかけて${U[q.to]}に直すのじゃ。`
+    : `求めるのは${U[q.to]}じゃ。${U[u]}ではないぞ。`;
+  const STAGE = { molarX: 0, molarY: 4, startRaw: 0, startInv: 0, ratioInv: 2, ratioNone: 2, endInv: 4, digits: null };
+  const TAG = { molarX: "モル質量", molarY: "モル質量", startRaw: "最初の換算", startInv: "最初の換算", ratioInv: "係数の比", ratioNone: "係数の比", endInv: "最後の換算", digits: "けた" };
+  const msgs = best.map(e => e.startsWith("unit:") ? unitMsg(e.slice(5)) : MSG[e]);
+  const tags = [...new Set(best.map(e => e.startsWith("unit:") ? "求める量" : TAG[e]))];
+  const e0 = best[0], stage = e0.startsWith("unit:") ? (q.to === "n" ? 3 : 4) : STAGE[e0];
+  return { line: msgs.slice(0, 2).join(""), tag: tags.join("・"), stage: stage != null && stage === 0 && q.from === "n" ? 1 : stage };
+}
+function qtyCheck() {
+  if (qDone()) return;
+  const v = evaluate(S.expr), now = performance.now(), q = S.q, p = cur();
+  if (v === null) { setMsg("ng", S.expr ? "式が途中です。最後まで入力してから答え合わせしよう。" : "電卓で式を入力してから答え合わせしよう。"); return; }
+  S.taps++;
+  if (isCorrect(v, q.ans)) {
+    S.solved = true;
+    const stars = Math.max(1, 3 - S.miss);
+    S.res[S.idx] = { stars, taps: S.taps, miss: S.miss };
+    scene.fx = { ok: true, t0: now, until: now + 2600 }; scene.lamp = "ok";
+    renderQty();
+    setMsg("ok", `正解！ ${q.ansHtml}<span class="stars" aria-label="星${stars}つ">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</span>`);
+    say(stars === 3 ? "doc" : "app", stars === 3 ? pickLine("qOk3", ["正解じゃ！ 係数の比をうまく使えたのう。", "見事じゃ！ 物質量を中心に考えれば、こわいものなしじゃ。", "うむ、計算もばっちりじゃ。", "ほっほっ、単位までしっかり合っておるのう。"])
+      : pickLine("qOk2", ["計算、合ってました！ 博士、見てました？", "やった、正解です！ 係数の比がカギでした！", "ふう、今度は合いました…！", "mol に直したら、すっきり解けました！"]));
+    if (kb) $("nextBtn").focus();
+    return;
+  }
+  S.miss++; S.life--; renderLife(true);
+  const dg = diagnose(v, S.q, cur());
+  scene.fx = { ok: false, bad: [], stage: dg ? dg.stage : null, t0: now, until: now + 1800 }; scene.lamp = "ng";
+  setTimeout(() => { if (scene.lamp === "ng") scene.lamp = "off"; }, 1400);
+  const fx = fmt(p.L.concat(p.R)[q.xi]), fy = fmt(p.L.concat(p.R)[q.yi]);
+  let line = dg ? dg.line : pickLine("qNg", [
+    `答えがちがうぞ。${fx} と ${fy} の係数の比は ${q.aX} : ${q.aY} じゃ。`,
+    `おしいのう。まずは ${fx} の物質量を求めてみるのじゃ。`,
+    `計算をたしかめるのじゃ。求めるのは「${{ n: "物質量（mol）", V: "体積（L）", N: "個数" }[q.to]}」じゃぞ。`,
+    `むむ、ちがうのう。係数の比をかけるときに、分子と分母が逆になっておらんか？`,
+  ]);
+  setMsg("ng", `失敗：${fmtAny(v)} ${QUNIT[q.to]} ではない${dg ? `（ヒント：${dg.tag}）` : ""}`);
+  if (S.life <= 0) { S.res[S.idx] = { failed: true }; line += pickLine("dead", [" …ライフが尽きてしもうたのう。", " …むう、今日の実験はここまでのようじゃ。"]); }
+  else if (S.miss >= 3) {   // 同じ問題で3回まちがえたら、解答を出す
+    S.shown = true; S.res[S.idx] = { shown: true, auto: true };
+    line += pickLine("auto3", [" …3回まちがえたから、答えを見せるぞ。よく見ておくのじゃ。", " 3回目じゃな。今回は答えを見せよう。つぎは自分で解くのじゃぞ。", " ここまでじゃ。答えを見て、どこがちがったか確かめるのじゃ。"]);
+  }
+  else if (S.life === 1) line += pickLine("last1", [" ライフは残り1つじゃ、慎重にな。", " もうあとがないぞ、よく計算するのじゃ。"]);
+  say("doc", line);
+  renderQty();
+  if (autoFusen()) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">（付せんをはりました）</span>');
+  if (S.res[S.idx] && S.res[S.idx].auto) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">→ 3回まちがえたので、解答を表示しました（★なし）</span>');
+  if ((S.life <= 0 || S.shown) && kb) $("nextBtn").focus();
+}
+function qtyAsk() {
+  if (qDone()) return;
+  S.shown = true; S.res[S.idx] = { shown: true }; scene.fx = null;
+  renderQty();
+  setMsg("ng", "解答を見た（★なし）");
+  const added = autoFusen();
+  if (added) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">（付せんをはりました）</span>');
+  $("nextBtn").focus({ preventScroll: true });
+  say("doc", pickLine("qAsk", ["答えと解き方はこうじゃ。物質量を中心に考えるのじゃぞ。", "よし、解き方を見せよう。係数の比がカギじゃ。", "まず mol に直す、係数の比をかける、目的の量に直す。この3段じゃ。"]));
+}
+// 量的関係のキー操作
+//  電卓のボタンの上：←→↑↓ でボタンを移動、Enter で押す。いちばん上の段から ↑ で「答え合わせ」、いちばん下の段から ↓ で「博士に解答を聞く」
+//  縦の並び：「やめる」→「答え合わせ」→ 電卓 →「博士に解答を聞く」（解答画面では「やめる」→「つぎの問題へ」）
+//  ボタンを選んでいないとき：←→ は式のカーソル移動、数字や記号はそのまま入力
+let keyNav = false;   // 矢印で電卓のボタンを選んだとき true（マウスで押したあとの Enter は答え合わせのまま）
+function qtyKey(e) {
+  const a = document.activeElement, done = qDone();
+  const keyEls = [...document.querySelectorAll("#keys .key")], ki = keyEls.indexOf(a);
+  const usable = el => el && !el.disabled && !el.closest("[hidden]");
+  const go = el => { el.focus({ preventScroll: true }); reveal(el); keyNav = keyEls.includes(el); };
+  const scrollStep = dir => { const side = $("gamePanel").closest(".side"), dy = dir * Math.round(innerHeight * 0.3), behavior = reduceMotion ? "auto" : "smooth";
+    if (side && side.scrollHeight > side.clientHeight + 1) side.scrollBy({ top: dy, behavior }); else window.scrollBy({ top: dy, behavior }); };
+  if (e.key === "Enter") {
+    const onBtn = a && a.tagName === "BUTTON" && usable(a) && (ki < 0 || keyNav);
+    if (onBtn) return;   // 選んでいるボタンを押す（電卓のボタンなら、その文字を入力）
+    e.preventDefault(); kb = true;
+    if (done) next(); else qtyCheck();
+    return;
+  }
+  if (e.key === "Escape") { e.preventDefault(); calcPress("C"); return; }
+  const arrow = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[e.key];
+  if (arrow) {
+    kb = true;
+    if (ki >= 0 && !done) {   // 電卓のボタンの上
+      e.preventDefault();
+      const r = Math.floor(ki / 4), col = ki % 4, rows = Math.ceil(keyEls.length / 4);
+      S.kcol = col;
+      if (arrow === "left" || arrow === "right") return go(keyEls[r * 4 + (col + (arrow === "right" ? 1 : 3)) % 4]);
+      if (arrow === "up") return go(r === 0 ? (usable($("qCheckBtn")) ? $("qCheckBtn") : $("quitBtn")) : keyEls[ki - 4]);
+      return go(r === rows - 1 ? (usable($("askBtn")) ? $("askBtn") : keyEls[col]) : keyEls[ki + 4]);
+    }
+    const chain = done ? [$("quitBtn"), $("nextBtn")] : [$("quitBtn"), $("qCheckBtn"), "KEYS", $("askBtn")];
+    const pos = chain.indexOf(a);
+    if (arrow === "up" || arrow === "down") {
+      e.preventDefault();
+      const d = arrow === "down" ? 1 : -1;
+      if (pos < 0) return go(d > 0 ? (done ? $("nextBtn") : $("qCheckBtn")) : $("quitBtn"));
+      const t = chain[pos + d];
+      if (t === "KEYS") return go(keyEls[(d > 0 ? 0 : keyEls.length - 4) + (S.kcol || 0)]);
+      if (t && usable(t)) return go(t);
+      return scrollStep(d);   // その先にボタンがなければスクロール
+    }
+    // ←→：式のカーソル移動
+    if (!done) { e.preventDefault(); calcPress(arrow === "left" ? "L" : "R"); }
+    return;
+  }
+  const map = { Backspace: "BS", Delete: "DEL", Home: "HOME", End: "END", x: "*", X: "*", "×": "*", "÷": "/", e: "E", E: "E", "^": "E", a: "NA", A: "NA", v: "VM", V: "VM" };
+  const k = map[e.key] || (/^[\d.+\-*/()]$/.test(e.key) ? e.key : null);
+  if (k && !done) { e.preventDefault(); kb = true; calcPress(k); }
+}
+$("keys").addEventListener("pointerdown", () => { keyNav = false; });
+$("keys").addEventListener("click", e => { const b = e.target.closest(".key"); if (b) calcPress(b.dataset.k); });
+$("expr").addEventListener("click", e => {
+  if (qDone() || !S.expr) return;
+  const ch = e.target.closest(".ch");
+  if (ch) { const r = ch.getBoundingClientRect(); S.cursor = +ch.dataset.i + (e.clientX > r.left + r.width / 2 ? 1 : 0); } else S.cursor = S.expr.length;
+  renderCalc();
+});
+$("qCheckBtn").addEventListener("click", qtyCheck);
+function applyModeUI() {
+  const q = S.mode === "qty";
+  ["coefTop", "coefBottom", "playRow"].forEach(id => $(id).hidden = q || (id === "playRow" && $(id).hidden));
+  ["qtyTop", "qtyBottom"].forEach(id => $(id).hidden = !q);
+  if (!q) { $("qPlayRow").hidden = true; $("qExplain").hidden = true; scene.qty = null; }
+  $("bmBtn").hidden = q;   // 量的関係モードでは付せんのボタンを出さない
+}
+
+let kb = false;
+// 選んだものが見えるようにスクロールする。上の「付せん」「やめる」なら、いちばん上まで戻す
+function reveal(el) {
+  if (!el) return;
+  const behavior = reduceMotion ? "auto" : "smooth";
+  if (el.closest(".hud")) { window.scrollTo({ top: 0, behavior }); const side = el.closest(".side"); if (side && side.scrollHeight > side.clientHeight) side.scrollTo({ top: 0, behavior }); }
+  else el.scrollIntoView({ block: "nearest", behavior });
+}
+const focusSel = () => requestAnimationFrame(() => { const el = document.querySelector(`#eq .term[data-j="${S.sel}"]`); if (el) { el.focus({ preventScroll: true }); reveal(el); } });
 let holdT = null, repT = null, holdFired = false;
 function stopHold() { clearTimeout(holdT); clearInterval(repT); holdT = repT = null; }
-$("equation").addEventListener("pointerdown", e => {
+$("eq").addEventListener("pointerdown", e => {
   const b = e.target.closest(".stepper button"); if (!b || b.disabled) return;
   e.preventDefault();
   const j = +b.dataset.j, d = +b.dataset.d;
-  holdFired = true;
-  step(j, d);
+  S.sel = j; kb = false;
+  holdFired = true; step(j, d);
   holdT = setTimeout(() => { repT = setInterval(() => step(j, d), 110); }, 420);
 });
 ["pointerup", "pointercancel"].forEach(t => document.addEventListener(t, stopHold));
-$("equation").addEventListener("click", e => {
+$("eq").addEventListener("click", e => {
   const b = e.target.closest(".stepper button"); if (!b) return;
-  if (holdFired) { holdFired = false; return; } // pointerdown で処理済み
-  step(+b.dataset.j, +b.dataset.d); // キーボードの Enter/Space
+  if (holdFired) { holdFired = false; return; }
+  step(+b.dataset.j, +b.dataset.d);
 });
-$("equation").addEventListener("contextmenu", e => { if (e.target.closest(".stepper")) e.preventDefault(); });
-$("equation").addEventListener("keydown", e => {
-  const t = e.target.closest(".term"); if (!t || e.target !== t) return;
-  const j = +t.dataset.j, n = S.coefs.length;
-  const refocus = k => requestAnimationFrame(() => document.querySelector(`.term[data-j="${k}"]`)?.focus());
-  if (e.key === "ArrowUp") { e.preventDefault(); step(j, 1); refocus(j); }
-  else if (e.key === "ArrowDown") { e.preventDefault(); step(j, -1); refocus(j); }
-  else if (e.key === "ArrowRight") { e.preventDefault(); refocus((j + 1) % n); }
-  else if (e.key === "ArrowLeft") { e.preventDefault(); refocus((j - 1 + n) % n); }
+$("eq").addEventListener("contextmenu", e => { if (e.target.closest(".stepper")) e.preventDefault(); });
+// キーボード：←→ で物質を選ぶ、↑↓ で係数、Enter で反応させる／つぎの問題へ（フォーカスの位置に関係なく使える）
+$("eq").addEventListener("focusin", e => {
+  const t = e.target.closest(".term"); if (!t) return;
+  S.sel = +t.dataset.j;
+  document.querySelectorAll("#eq .term").forEach(el => el.classList.toggle("sel", el === t));
+});
+document.addEventListener("keydown", e => {
+  if (S.step !== "game" || listOpen() || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (S.mode === "qty") return qtyKey(e);
+  if (e.key === "Escape") { toMenu(); return; }
+  const a = document.activeElement;
+  const onOtherBtn = a && a.tagName === "BUTTON" && !a.closest("#eq") && !a.disabled && a.offsetParent !== null;   // 見えていて押せるボタンだけ
+  const n = S.coefs.length;
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault(); kb = true;
+    if (S.sel == null || S.sel >= n) S.sel = 0;
+    // ←→ の移動順：物質（反応物 → 生成物）→「すべて 1 に戻す」→「反応させる」→「ヒント」→「博士に解答を聞く」→ 最初へ
+    // 正解・答えを見た・ライフ切れのあとは「つぎの問題へ（結果を見る）」が並びに入る
+    // 最後に「ヒント：表示／かくす」も並ぶ
+    const btns = ($("playRow").hidden ? ["nextBtn", "hintBtn"] : ["resetBtn", "reactBtn", "hintBtn", "askBtn"]).map($).filter(x => !x.disabled && !x.closest("[hidden]"));
+    // ←→ の並び：「付せん」「やめる」→ 物質 → 下のボタン → 最初にもどる
+    const head = ["bmBtn", "quitBtn"].map($).filter(x => !x.disabled && !x.closest("[hidden]"));
+    const ring = [...head.map(el => ({ el })), ...Array.from({ length: n }, (_, j) => ({ j })), ...btns.map(el => ({ el }))];
+    const bi = ring.findIndex(x => x.el && x.el === a);
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      if (bi >= 0) {   // ボタン（ヒントなど）にいるときは係数を変えず、ページを上下にスクロールする
+        e.preventDefault();
+        // 「やめる」↓ →「すべて 1 に戻す」、「すべて 1 に戻す」↑ →「やめる」
+        const jump = e.key === "ArrowDown" && (a.id === "quitBtn" || a.id === "bmBtn") ? $("resetBtn") : e.key === "ArrowUp" && a.id === "resetBtn" ? $("quitBtn") : null;
+        if (jump && !jump.disabled && !jump.closest("[hidden]")) { jump.focus({ preventScroll: true }); reveal(jump); return; }
+        const side = a.closest(".side"), dy = (e.key === "ArrowDown" ? 1 : -1) * Math.round(innerHeight * 0.3), behavior = reduceMotion ? "auto" : "smooth";
+        if (side && side.scrollHeight > side.clientHeight + 1) side.scrollBy({ top: dy, behavior }); else window.scrollBy({ top: dy, behavior });
+        return;
+      }
+      step(S.sel, e.key === "ArrowUp" ? 1 : -1);
+      if (!(S.solved || S.shown || S.life <= 0)) focusSel();
+      return;
+    }
+    const len = ring.length, pos = bi >= 0 ? bi : ring.findIndex(x => x.j === S.sel);
+    const t = ring[(pos + (e.key === "ArrowRight" ? 1 : len - 1)) % len];
+    if (t.el) { document.querySelectorAll("#eq .term.sel").forEach(el => el.classList.remove("sel")); t.el.focus({ preventScroll: true }); reveal(t.el); }
+    else { S.sel = t.j; renderEquation(); focusSel(); }
+  } else if (e.key === "Enter" && !onOtherBtn) {
+    e.preventDefault(); kb = true;
+    if (S.solved || S.shown || S.life <= 0) next(); else react();
+  } else if (e.key === "Enter") kb = true;   // ボタン上の Enter はそのボタンを押す
 });
 
-$("pick-lv").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; S.lv = +b.dataset.lv; store.set("keisu-lv", S.lv); renderHome(); });
-$("pick-cnt").addEventListener("click", e => { const b = e.target.closest(".choice"); if (!b) return; S.cnt = +b.dataset.cnt; store.set("keisu-cnt", S.cnt); renderHome(); });
-$("ion-toggle").addEventListener("change", e => { S.ion = e.target.checked; renderHome(); });
-$("btn-start").addEventListener("click", startSession);
-$("btn-again").addEventListener("click", startSession);
-$("btn-home").addEventListener("click", () => { renderHome(); show("home"); });
-$("btn-menu").addEventListener("click", () => { renderHome(); show("home"); });
-$("btn-reset").addEventListener("click", () => { S.coefs = S.coefs.map(() => 1); renderGame(); });
-$("btn-answer").addEventListener("click", () => {
-  S.coefs = [...cur().a]; S.shown = true; S.res[S.idx] = { shown: true };
-  renderGame();
-});
-$("btn-next").addEventListener("click", () => {
-  if (!S.res[S.idx]) S.res[S.idx] = { skipped: true };
-  if (S.idx + 1 < S.set.length) load(S.idx + 1); else finish();
-});
-hintEl.addEventListener("change", () => { store.set("keisu-hint", hintEl.checked); renderLedger(); });
+const pick = (group, fn) => $(group).addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; fn(b.dataset.v); renderMenu(); });
+pick("modeOpts", v => { S.mode = v === "qty" ? "qty" : "coef"; store.set("keisu.mode", S.mode); });
+pick("lvOpts", v => { S.lv = /^\d$/.test(v) ? +v : v; store.set("keisu.lv", S.lv); });
+pick("cntOpts", v => { S.cnt = v === "all" ? "all" : +v; store.set("keisu.cnt", S.cnt); });
+pick("ionOpts", v => { S.ion = v === "1"; store.set("keisu.ion", S.ion); });
+pick("lifeOpts", v => { S.lifeSel = +v; store.set("keisu.life", S.lifeSel); });
+$("startBtn").addEventListener("click", start);
+$("retryBtn").addEventListener("click", start);
+$("menuBtn").addEventListener("click", toMenu);
+$("quitBtn").addEventListener("click", toMenu);
+$("reactBtn").addEventListener("click", react);
+$("askBtn").addEventListener("click", askDoc);
+$("nextBtn").addEventListener("click", next);
+$("resetBtn").addEventListener("click", () => { S.coefs = S.coefs.map(() => 1); setMsg("", ""); renderGame(); });
+$("hintBtn").addEventListener("click", () => { S.hint = !S.hint; store.set("keisu.hint", S.hint); renderGame(); });
 
-/* 更新時に遊んでいる途中の状態を保つ */
-window.claude?.hot?.snapshot?.(() => ({ ...S }));
-function start(d) {
-  if (d && d.screen === "game" && Array.isArray(d.set) && d.set.every(p => p && Array.isArray(p.L))) {
-    Object.assign(S, d);
-    if (S.coefs.length !== species(cur()).length) load(S.idx); else renderGame(); show("game");
-  } else { renderHome(); show("home"); }
+// =========================================================
+// 化学反応一覧（一度でも挑戦した反応が記録されていく）
+// =========================================================
+function eqHtml(p) {
+  const t = (f, j) => (p.a[j] > 1 ? `<b class="cf">${p.a[j]}</b>` : "") + fmt(f);
+  return p.L.map((f, j) => t(f, j)).join(" + ") + " ⟶ " + p.R.map((f, k) => t(f, k + p.L.length)).join(" + ");
 }
-window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+function atomsHtml(p) {   // 正しい係数のときの、左辺（＝右辺）の原子の数
+  const c = {}, order = [];
+  p.L.forEach((f, j) => { const x = parse(f); for (const e in x) { if (!order.includes(e)) order.push(e); c[e] = (c[e] || 0) + x[e] * p.a[j]; } });
+  p.R.forEach(f => { for (const e in parse(f)) if (!order.includes(e)) order.push(e); });
+  if (order.includes(CHARGE)) order.push(order.splice(order.indexOf(CHARGE), 1)[0]);
+  return order.map(e => e === CHARGE ? `電荷 ${signed(c[e] || 0)}` : `<span class="chem">${e}</span> ${c[e] || 0}`).join("・");
+}
+let listGroup = "all";
+const listOpen = () => !$("listPage").hidden;
+function renderList() {
+  $("listTabs").querySelectorAll("[data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === listGroup)));
+  const card = p => {
+    const e = seen[p.id], no = `<span class="no">No.${String(ALL.indexOf(p) + 1).padStart(3, "0")}</span>`;
+    if (!e) return `<div class="lp-card lp-locked px" aria-label="まだ挑戦していない反応">${no}<span class="q">？？？</span><small>まだ挑戦していない反応</small></div>`;
+    const stars = e.b ? `<span class="gold">${"★".repeat(e.b)}${"☆".repeat(3 - e.b)}</span>` : "まだ自力で解いていない";
+    return `<details class="lp-card px"><summary>${no}<span class="nm">${p.name}</span><span class="badges">${e.b === 3 ? '<span class="crown" role="img" aria-label="★3つで解いた" title="★3つで解いた">👑</span>' : ""}<button class="bmbtn" type="button" data-bm="${p.id}"></button></span></summary>
+      <div class="lp-body">
+        <p class="lp-eqmain">${eqHtml(p)}</p>
+        <p class="lp-atoms">原子の数（左辺＝右辺）：${atomsHtml(p)}</p>
+        <p class="lp-note">${LV_NAME[p.lv]}・${p.ion ? "イオン反応式" : "化学反応式"}　挑戦 ${e.c} 回　最高 ${stars}</p>
+      </div></details>`;
+  };
+  if (listGroup === "bm") {
+    const list = ALL.filter(p => bm.has(p.id));
+    $("listBody").innerHTML = `<h2 class="lp-grp"><i class="fu" aria-hidden="true"></i>付せん（${list.length} 問）</h2>` + (list.length
+      ? `<div class="lp-tools" style="margin:8px 0 10px"><button class="btn small px" id="playBmBtn" type="button">付せんの反応で遊ぶ</button></div><div class="lp-list">${list.map(card).join("")}</div>`
+      : '<p class="lp-empty">まだ付せんをはった反応がありません。ゲーム中の「付せんをはる」や、この一覧の各反応から、見直したい反応に付せんをはれます。失敗した反応や、博士に答えを聞いた反応には、自動で付せんがはられます。</p>');
+    if (list.length) $("playBmBtn").addEventListener("click", () => { S.lv = "bm"; store.set("keisu.lv", S.lv); closeList(); toMenu(); start(); });
+  } else {
+    const lvs = listGroup === "all" ? [0, 1, 2] : [+listGroup];
+    const all = lvs.flatMap(lv => [...PROBLEMS[lv], ...ION_PROBLEMS[lv]]);
+    const got = l => l.filter(p => seen[p.id]).length, n = got(all), pf = all.filter(p => seen[p.id] && seen[p.id].b === 3).length;
+    const prog = `<div class="nb-prog px"><div class="row"><span class="big">記録した反応　${n} / ${all.length} 問</span><span>${Math.round(n / all.length * 100)}%</span></div>
+      <div class="nb-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${all.length}" aria-valuenow="${n}"><i style="width:${n / all.length * 100}%"></i></div>
+      <small>👑＝★3つで解いた反応（${pf} 問）。まだ挑戦していない反応は、ゲームで出会うと一覧に記録されます。イオン反応式は、メニューで「ふくめる」にすると出題されます。</small></div>`;
+    const sec = (title, list) => `<h2 class="lp-grp">${title} <small>（${got(list)} / ${list.length} 問）</small></h2><div class="lp-list">${list.map(card).join("")}</div>`;
+    $("listBody").innerHTML = prog + lvs.map(lv => sec(`${LV_NAME[lv]}　化学反応式`, PROBLEMS[lv]) + sec(`${LV_NAME[lv]}　イオン反応式`, ION_PROBLEMS[lv])).join("");
+  }
+  syncBm();
+}
+let listFrom = null;
+function openList(g) {
+  if (g) listGroup = g;
+  listFrom = document.activeElement;
+  renderList();
+  document.querySelector("main.wrap").hidden = true; $("listPage").hidden = false;
+  window.scrollTo(0, 0); $("listBack").focus({ preventScroll: true });
+}
+function closeList() {
+  $("listPage").hidden = true; document.querySelector("main.wrap").hidden = false;
+  window.scrollTo(0, 0); renderMenu();
+  (listFrom && document.body.contains(listFrom) && !listFrom.closest("[hidden]") ? listFrom : $("listBtn")).focus({ preventScroll: true });
+}
+$("listBtn").addEventListener("click", () => openList(listGroup === "bm" ? "all" : null));
+$("bmListBtn").addEventListener("click", () => openList("bm"));
+$("listBack").addEventListener("click", closeList);
+$("listBack2").addEventListener("click", closeList);
+$("openAllBtn").addEventListener("click", () => $("listBody").querySelectorAll("details.lp-card").forEach(d => d.open = true));
+$("closeAllBtn").addEventListener("click", () => $("listBody").querySelectorAll("details.lp-card").forEach(d => d.open = false));
+$("listTabs").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; listGroup = b.dataset.v; renderList(); b.focus(); });
+document.addEventListener("click", e => { const b = e.target.closest("[data-bm]"); if (b) { e.preventDefault(); toggleBm(b.dataset.bm); } });
+
+// ---------- メニュー・ふりかえり・一覧のキーボード操作 ----------
+// ↑↓←→：画面上でその方向にいちばん近いボタンへ　Enter／Space：押す・開く　Esc：一覧を閉じる
+const inClosed = el => { for (let d = el.closest("details"); d; d = d.parentElement && d.parentElement.closest("details")) { if (!d.open && !(el.closest("summary") && el.closest("summary").parentElement === d)) return true; } return false; };
+const shown = el => { const b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0 && !el.closest("[hidden]") && !inClosed(el); };
+const navItems = () => [...document.querySelectorAll(listOpen() ? "#listPage button:not([disabled]), #listPage summary" : ".side button:not([disabled])")].filter(shown);
+function firstFocus() {
+  const el = listOpen() ? $("listBack") : S.step === "end" ? $("retryBtn") : $("startBtn");
+  el.focus({ preventScroll: true }); el.scrollIntoView({ block: "nearest" });
+}
+function moveFocus(dir) {
+  const items = navItems(); if (!items.length) return false;
+  const now = document.activeElement;
+  if (!items.includes(now)) { firstFocus(); return true; }
+  // メニュー・ふりかえり・化学反応一覧では、←→ は文章を読む順（行の終わりから次の行の先頭へ、最後から最初へ）に動く
+  if (dir === "left" || dir === "right") {
+    const i = items.indexOf(now), to = items[(i + (dir === "right" ? 1 : items.length - 1)) % items.length];
+    to.focus({ preventScroll: true });
+    const behavior = reduceMotion ? "auto" : "smooth";
+    if (to === items[0]) { window.scrollTo({ top: 0, behavior }); const side = to.closest(".side"); if (side) side.scrollTo({ top: 0, behavior }); }
+    else to.scrollIntoView({ block: "nearest", behavior });
+    return true;
+  }
+  const a = now.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  let bestEl = null, bestScore = Infinity;
+  items.forEach(el => {
+    if (el === now) return;
+    const b = el.getBoundingClientRect(), dx = b.left + b.width / 2 - ax, dy = b.top + b.height / 2 - ay;
+    const main = { left: -dx, right: dx, up: -dy, down: dy }[dir];
+    const horiz = dir === "left" || dir === "right";
+    // 上下に移るときは、横の範囲が重なっていればずれ 0（横長のボタンも「真下」として選ばれるように）
+    const side = horiz ? Math.abs(dy) : Math.max(0, b.left - a.right, a.left - b.right);
+    const sameLine = horiz ? (b.bottom > a.top + 2 && b.top < a.bottom - 2) : true;
+    if (main <= 4) return;
+    if (horiz && !sameLine) return;   // 左右は同じ行の中だけ
+    const score = main + side * 3;
+    if (score < bestScore) { bestScore = score; bestEl = el; }
+  });
+  if (!bestEl) return false;   // その方向にボタンがなければ、ふつうにスクロールさせる
+  bestEl.focus({ preventScroll: true });
+  bestEl.scrollIntoView({ block: (dir === "up" || dir === "down") ? "center" : "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+  return true;
+}
+document.addEventListener("keydown", e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!listOpen() && S.step === "game") return;   // 問題中は、上のキー操作を使う
+  kb = true;
+  const dir = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" }[e.key];
+  if (dir) { if (moveFocus(dir) || dir === "left" || dir === "right") e.preventDefault(); return; }
+  if (e.key === "Escape" && listOpen()) { e.preventDefault(); closeList(); return; }
+  const a = document.activeElement;
+  if (e.key === "Enter" && !(a && (a.tagName === "BUTTON" || a.tagName === "SUMMARY"))) { e.preventDefault(); firstFocus(); }
+});
+
+// 更新時に遊んでいる途中の状態を保つ
+window.claude?.hot?.snapshot?.(() => ({ ...S }));
+function boot(d) {
+  if (d && d.step === "game" && Array.isArray(d.set) && d.set.length && d.set.every(p => p && Array.isArray(p.L))) {
+    Object.assign(S, d);
+    $("titleScreen").hidden = true; $("meta").hidden = false; show("gamePanel"); scene.active = true;
+    renderLife(false);
+    applyModeUI();
+    if (S.mode === "qty") { if (S.q) renderQty(); else load(S.idx); }
+    else if (S.coefs.length !== species(cur()).length) load(S.idx); else renderGame();
+  } else toMenu();
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+})();
 </script>
 </body>
 </html>
