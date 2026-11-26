@@ -170,6 +170,15 @@ td.n { font-family: var(--f-pixel); font-size: 1.05rem; }
 .qeq .cf { font-family: var(--f-pixel); font-weight: 400; color: var(--head); margin-right: 1px; }
 .qtext { margin: 0; font-size: 1.02rem; line-height: 1.95; }
 .qaw { margin: 0; font-size: .85rem; color: var(--muted); font-family: var(--f-chem); }
+#xsSec, #ionSec { display: grid; gap: 14px; }   /* 見出しとボタンの間をほかの欄とそろえる */
+#qPlayRow { margin-bottom: 12px; }   /* 「答え合わせ」と電卓のボタンの間をあけて、押しまちがいを防ぐ */
+.xs-pick .opt { text-align: center; padding: 10px 6px; }
+.xs-pick .opt b { font-size: 1.1rem; }
+.xs-tbl { overflow-x: auto; }
+.xs-tbl table { border-collapse: collapse; font-size: .88rem; background: var(--paper); }
+.xs-tbl th, .xs-tbl td { border: 1px solid var(--line); padding: 3px 8px; text-align: center; white-space: nowrap; }
+.xs-tbl thead th { font-weight: 400; }
+.xs-tbl tbody th { font-family: var(--f-pixel); font-weight: 400; color: var(--head); }
 .qtext .v { font-family: var(--f-chem); font-weight: 600; background: var(--sel); padding: 0 4px; white-space: nowrap; }
 .calc { display: grid; gap: 6px; }
 .screen { background: var(--paper); box-shadow: inset 0 0 0 2px var(--line); padding: 8px 12px; display: grid; gap: 2px; min-height: 64px; }
@@ -314,9 +323,16 @@ td.n { font-family: var(--f-pixel); font-size: 1.05rem; }
     <section class="panel px" id="menu">
       <div class="lp-tools"><button class="linkbtn" id="listBtn" type="button">📓 化学反応一覧 ▶</button><button class="linkbtn" id="bmListBtn" type="button"><i class="fu" aria-hidden="true"></i>付せん一覧 ▶</button></div>
       <h2>モード</h2>
-      <div class="opts c2" id="modeOpts">
-        <button class="opt px" type="button" id="mode-coef" data-v="coef"><b>係数</b><small>反応式の係数を合わせる</small></button>
-        <button class="opt px" type="button" id="mode-qty" data-v="qty"><b>量的関係</b><small>係数の比から、物質量・質量・個数・気体の体積を求める</small></button>
+      <div class="opts c2 center" id="modeOpts">
+        <button class="opt px" type="button" id="mode-coef" data-v="coef"><b>係数</b></button>
+        <button class="opt px" type="button" id="mode-qty" data-v="qty"><b>量的関係</b></button>
+      </div>
+      <div id="xsSec" hidden>
+      <h2>過不足</h2>
+      <div class="opts c2 center" id="xsOpts">
+        <button class="opt px" type="button" id="xs-0" data-v="0"><b>なし</b></button>
+        <button class="opt px" type="button" id="xs-1" data-v="1"><b>あり</b></button>
+      </div>
       </div>
       <h2>難易度</h2>
       <div class="opts c3" id="lvOpts">
@@ -361,7 +377,10 @@ td.n { font-family: var(--f-pixel); font-size: 1.05rem; }
         <p class="qeq px" id="qEq"></p>
         <p class="qtext" id="qText"></p>
         <p class="qaw" id="qAw" hidden></p>
-        <div class="calc">
+        <div class="xs-pick" id="xsPick" hidden>
+          <div class="opts c2" id="xsBtns"><button class="opt px" type="button" id="xsA" data-i="0"></button><button class="opt px" type="button" id="xsB" data-i="1"></button></div>
+        </div>
+        <div class="calc" id="calcWrap">
           <div class="screen"><div class="expr" id="expr" aria-live="off"></div><div class="preview" id="preview"></div></div>
           <div class="unitline"><span>答えの単位</span><b id="ansUnit"></b></div>
           <div class="row-end" id="qPlayRow" hidden><button class="btn px" id="qCheckBtn" type="button">答え合わせ</button></div>
@@ -409,11 +428,12 @@ td.n { font-family: var(--f-pixel); font-size: 1.05rem; }
       </div>
       <div id="qtyBottom" hidden>
         <ol class="howto">
+          <li id="xsHow" hidden>過不足あり：まず、反応後に余る物質を選ぶ。片方の量から、過不足なく反応する相手の量を係数の比で求めて、くらべよう。そのあと、すべて反応する物質を基準に量を計算する。</li>
           <li>係数の比は、物質量（mol）の比を表す。与えられた量を物質量に直し、係数の比をかけて、問われた量に直そう。</li>
           <li>アボガドロ定数 6.0×10<sup>23</sup> /mol、気体のモル体積 22.4 L/mol（標準状態：0 ℃、1.013×10<sup>5</sup> Pa）。質量の問題では、使う原子量が問題文の下に出る。モル質量（g/mol）は、原子量の和に単位 g/mol をつけたもの。</li>
           <li>電卓で式を入力して「答え合わせ」。まちがえるとライフが 1 減り、★も 1 つ減る。同じ問題で 3 回まちがえると、解答が表示される（★なし）。</li>
         </ol>
-        <p class="keys-help">キーボード：数字・+ − * / ( )、<kbd>E</kbd> 10ⁿ、<kbd>A</kbd> 6.0×10²³、<kbd>V</kbd> 22.4 をそのまま入力できる。<kbd>←</kbd><kbd>→</kbd> カーソル移動、<kbd>Backspace</kbd> 1文字消す、<kbd>Esc</kbd> すべて消す、<kbd>Enter</kbd> 答え合わせ・つぎへ。<kbd>↑</kbd><kbd>↓</kbd> で「やめる」・「答え合わせ」・電卓のボタン・「博士に解答を聞く」を選び、電卓のボタンの上では <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> で移動して <kbd>Enter</kbd> で押す。</p>
+        <p class="keys-help">キーボード：数字・+ − * / ( )、<kbd>E</kbd> 10ⁿ、<kbd>A</kbd> 6.0×10²³、<kbd>V</kbd> 22.4 をそのまま入力できる。<kbd>←</kbd><kbd>→</kbd> カーソル移動、<kbd>Backspace</kbd> 1文字消す、<kbd>Esc</kbd> すべて消す、<kbd>Enter</kbd> 答え合わせ・つぎへ。</p>
       </div>
       <div class="row-end" id="askRow"><button class="btn ghost small px" id="askBtn" type="button">博士に解答を聞く</button></div>
     </section>
@@ -951,7 +971,7 @@ function drawCounter(c, t) {
   // 見出しの小窓（左辺 → 右辺）とランプ
   P(c, x + 4, y + 3, 54, 4, "#59636e"); P(c, x + w - 58, y + 3, 54, 4, "#59636e");
   const lampCol = scene.lamp === "ok" ? "#6fe06a" : scene.lamp === "ng" ? (Math.floor(t / 150) % 2 ? "#ff4050" : "#8a2030") : "#6a6a72";
-  if (scene.qty) { drawPipe(c, t); return; }
+  if (scene.qty) { if (scene.qty.xs) drawXs(c, t); else drawPipe(c, t); return; }
   P(c, 125, 66, 7, 7, INK); P(c, 126, 67, 5, 5, lampCol); P(c, 126, 67, 1, 1, "#ffffff");   // ランプ（吹き出しに隠れない位置）
   TRAY.forEach((tr, s) => drawTray(c, tr, s));
   // まん中の矢印
@@ -1027,7 +1047,7 @@ function say(who, html) {
 
 const S = {
   step: "menu", lv: store.get("keisu.lv", 0), cnt: store.get("keisu.cnt", 10), ion: store.get("keisu.ion", false), lifeSel: store.get("keisu.life", 5),
-  hint: store.get("keisu.hint", true), mode: store.get("keisu.mode", "coef"), expr: "", cursor: 0, q: null,
+  hint: store.get("keisu.hint", true), mode: store.get("keisu.mode", "coef"), xs: store.get("keisu.xs", false), expr: "", cursor: 0, q: null,
   set: [], idx: 0, res: [], coefs: [], taps: 0, miss: 0, solved: false, shown: false, life: 5,
 };
 if (![0, 1, 2, "bm"].includes(S.lv)) S.lv = 0;
@@ -1057,25 +1077,26 @@ function recordCur() {
   e.c++; if (r && r.stars > e.b) e.b = r.stars;
   seen[p.id] = e; store.set("keisu.seen", seen);
 }
-const poolOf = lv => S.mode === "qty" ? (lv === "bm" ? ALL.filter(p => bm.has(p.id)) : PROBLEMS[lv]).filter(p => QTY_ABLE.has(p.id))
+const poolOf = lv => S.mode === "qty" ? (lv === "bm" ? ALL.filter(p => bm.has(p.id)) : PROBLEMS[lv]).filter(p => (S.xs ? XS_ABLE : QTY_ABLE).has(p.id))
   : lv === "bm" ? ALL.filter(p => bm.has(p.id)) : S.ion ? [...PROBLEMS[lv], ...ION_PROBLEMS[lv]] : PROBLEMS[lv];
 const pool = () => poolOf(S.lv);
 const cntN = () => S.cnt === "all" ? pool().length : Math.min(S.cnt, pool().length);   // 実際に出題する数
-const keyOf = lv => S.mode === "qty" ? `q-${lv}-${S.cnt}` : `${lv}-${S.cnt}${S.ion ? "-ion" : ""}`;
+const keyOf = lv => S.mode === "qty" ? `q${S.xs ? "x" : ""}-${lv}-${S.cnt}` : `${lv}-${S.cnt}${S.ion ? "-ion" : ""}`;
 const total = () => S.res.reduce((s, r) => s + (r && r.stars || 0), 0);
 
 function show(id) { ["menu", "gamePanel", "reviewPanel"].forEach(k => $(k).hidden = k !== id); }
 function press(group, v) { [...$(group).children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(v)))); }
 
 function renderMenu() {
-  press("modeOpts", S.mode); $("ionSec").hidden = S.mode === "qty"; press("lvOpts", S.lv); press("cntOpts", S.cnt); press("ionOpts", S.ion ? 1 : 0); press("lifeOpts", S.lifeSel);
+  press("modeOpts", S.mode); $("ionSec").hidden = S.mode === "qty"; $("xsSec").hidden = S.mode !== "qty"; press("xsOpts", S.xs ? 1 : 0); press("lvOpts", S.lv); press("cntOpts", S.cnt); press("ionOpts", S.ion ? 1 : 0); press("lifeOpts", S.lifeSel);
   document.querySelectorAll("[data-best]").forEach(el => { const v = el.dataset.best, b = best[keyOf(/^\d$/.test(v) ? +v : v)]; el.textContent = b != null ? `最高 ★${b}` : ""; });
   $("cnt-bm").textContent = bm.size ? `${bm.size} 問（レベル・イオン反応式の設定に関係なく出題）` : "まだ付せんをはった反応がありません";
   $("lv-bm").disabled = !bm.size;
   if (S.lv === "bm" && !bm.size) { S.lv = 0; press("lvOpts", S.lv); }
   const n = pool().length;
   const tail = `その中から ${cntN()} 問をランダムに出題します。`;
-  if (S.lv === "bm") $("poolNote").textContent = `付せんをはった反応は ${n} 問。${tail}`;
+  if (S.mode === "qty" && S.xs) $("poolNote").textContent = `過不足ありでは、反応物が 2 つの反応式だけを出題します（${S.lv === "bm" ? "付せん" : LV_NAME[S.lv]}は ${n} 問）。${tail}`;
+  else if (S.lv === "bm") $("poolNote").textContent = `付せんをはった反応は ${n} 問。${tail}`;
   else { const ni = S.mode === "qty" ? "（量的関係モードでは、イオン反応式は出題しません）" : S.ion ? `（うちイオン反応式 ${ION_PROBLEMS[S.lv].length} 問）` : ""; $("poolNote").textContent = `${LV_NAME[S.lv]}は全 ${n} 問${ni}。${tail}`; }
   $("startBtn").disabled = !n;
 }
@@ -1104,6 +1125,7 @@ function start() {
 }
 function load(idx) {
   S.idx = idx;
+  { const sd = $("gamePanel").closest(".side"); if (sd) sd.scrollTop = 0; }   // 新しい問題は、いちばん上から
   if (S.mode === "qty") return loadQty(idx);
   scene.qty = null;
   S.coefs = species(cur()).map(() => 1);
@@ -1398,7 +1420,8 @@ function qtyPairs(p) {
   sp.forEach((X, xi) => sp.forEach((Y, yi) => {
     if (xi === yi) return;
     const MX = molarMass(X), MY = molarMass(Y);
-    const froms = ["n", "m", ...(canN(X) ? ["N"] : []), ...(canV(X) ? ["V"] : [])], tos = ["n", "m", ...(canN(Y) ? ["N"] : []), ...(canV(Y) ? ["V"] : [])];
+    const froms = p.lv === 0 ? ["n"] : ["n", "m", ...(canN(X) ? ["N"] : []), ...(canV(X) ? ["V"] : [])],   // 初級は、与える量を物質量だけにする
+          tos = ["n", "m", ...(canN(Y) ? ["N"] : []), ...(canV(Y) ? ["V"] : [])];
     froms.forEach(from => tos.forEach(to => N_CHOICES.forEach(ns => {
       if (from !== to && from !== "n" && to !== "n") return;   // 同じ単位どうしか、条件か解答のどちらかが物質量
       const nx = +ns, ny = nx * p.a[yi] / p.a[xi];
@@ -1449,6 +1472,201 @@ function makeQty(p) {
   const els = [...new Set([...(c.from === "m" ? Object.keys(parseFormula(X)) : []), ...(c.to === "m" ? Object.keys(parseFormula(Y)) : [])])];
   const aw = els.length ? `原子量：${els.map(e => `${e} = ${awText(e)}`).join("、")}` : "";
   return { xi: c.xi, yi: c.yi, from: c.from, to: c.to, nx, ny, given, MX, MY, text, aw, ans, steps, ansHtml: `${qtyHtml(c.to, ans)} ${QUNIT[c.to]}`, aX, aY };
+}
+// =========================================================
+// 過不足モード（量的関係モードで「過不足あり」のとき）
+// 反応物 2 つの量を与え、①すべて反応する（足りなくなる）物質を選び、②生成物・残る物質・反応後の気体の量を電卓で答える
+// =========================================================
+const UF = (u, f) => u === "n" ? 1 : u === "m" ? molarMass(f) : u === "V" ? VM : NAV;
+const okU = (u, f) => u === "n" || u === "m" || (u === "V" && canV(f)) || (u === "N" && canN(f));
+const exactU = (u, f, n) => u === "n" ? exactP(n, 3) : u === "m" ? exactP(n * molarMass(f), 3) : u === "V" ? exactP(n * VM, 3) : exactP(n * 6, 2);
+const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rpick = a => a[Math.floor(Math.random() * a.length)];
+// 1 回分の問題を、条件に合う数値が見つかるまで探す
+function xsTry(p, type, u, yiWant, toWant) {
+  const sp = [...p.L, ...p.R], A = p.L[0], B = p.L[1], aA = p.a[0], aB = p.a[1];
+  for (const sA of shuf(N_CHOICES)) for (const sB of shuf(N_CHOICES)) {
+    const nA = +sA, nB = +sB, rA = nA / aA, rB = nB / aB;
+    if (Math.abs(rA - rB) / Math.max(rA, rB) < 0.1 || Math.max(rA, rB) / Math.min(rA, rB) > 4) continue;   // ほぼ過不足なし・差が大きすぎるものは使わない
+    if (!exactU(u, A, nA) || !exactU(u, B, nB)) continue;
+    const lim = rA < rB ? 0 : 1, ex = 1 - lim, ext = Math.min(rA, rB);
+    if (!exactP(ext, 3)) continue;
+    const nE = [nA, nB][ex], rem = nE - ext * p.a[ex];
+    if (rem < 0.01 || !exactP(rem, 3)) continue;
+    let yi, to = toWant, ansN;
+    if (type === "prod") { yi = yiWant; ansN = ext * p.a[yi]; if (ansN < 0.01 || !exactP(ansN, 3) || !exactU(to, sp[yi], ansN)) continue; }
+    else if (type === "left") { yi = ex; if (!okU(to, sp[yi])) continue; ansN = rem; if (!exactU(to, sp[yi], ansN)) continue; }
+    else {   // 反応後の気体（体積の合計）
+      yi = -1; to = "V"; ansN = 0;
+      sp.forEach((f, j) => { if (!canV(f)) return; ansN += j < 2 ? (j === ex ? rem : 0) : ext * p.a[j]; });
+      if (ansN < 0.01 || !exactP(ansN * VM, 3)) continue;
+    }
+    return { sA, sB, nA, nB, lim, ex, ext, rem, yi, to, ansN };
+  }
+  return null;
+}
+function xsPlan(p) {   // この反応で作れる「問いかた・単位・求める物質」の組み合わせ
+  if (p.L.length !== 2 || !p.L.concat(p.R).every(f => SUB[f])) return [];
+  const sp = [...p.L, ...p.R], A = p.L[0], B = p.L[1], out = [];
+  const us = (p.lv === 0 ? ["n"] : ["n", "m", "V", "N"]).filter(u => okU(u, A) && okU(u, B));   // 初級は、与える量を物質量だけにする
+  const tosFor = (u, f) => (u === "n" ? ["n", "m", "V", "N"] : ["n", u]).filter(t => okU(t, f));
+  us.forEach(u => {
+    p.R.forEach((Y, k) => tosFor(u, Y).forEach(to => out.push({ type: "prod", u, yi: k + 2, to })));
+    ["n", ...(u === "n" ? ["m", "V", "N"] : [u])].forEach(to => out.push({ type: "left", u, to }));
+    if (p.lv === 2 && (u === "n" || u === "V") && sp.some(canV)) out.push({ type: "gas", u, to: "V" });
+  });
+  return out;
+}
+const XS_ABLE = new Set(PROBLEMS.flat().filter(p => xsPlan(p).some(c => xsTry(p, c.type, c.u, c.yi, c.to))).map(p => p.id));
+function makeXs(p) {
+  const sp = [...p.L, ...p.R], plan = xsPlan(p), A = p.L[0], B = p.L[1], aA = p.a[0], aB = p.a[1];
+  let c = null, r = null;
+  for (let t = 0; t < 60 && !r; t++) {
+    const types = [...new Set(plan.map(x => x.type))], type = rpick(types);   // 問いかたが均等になるように
+    c = rpick(plan.filter(x => x.type === type)); r = xsTry(p, c.type, c.u, c.yi, c.to);
+  }
+  const u = c.u, to = r.to, type = c.type;
+  const v = h => `<span class="v">${h}</span>`;
+  const gv = (f, s, n) => u === "n" ? s : u === "N" ? sciHtml(+sciParts(n * NAV).m * 10 ** sciParts(n * NAV).e) : num3(n * UF(u, f));
+  const gA = gv(A, r.sA, r.nA), gB = gv(B, r.sB, r.nB);
+  const amt = g => ({ n: v(g + " mol"), m: v(g + " g"), V: `標準状態で ${v(g + " L")}`, N: v(g + " 個") }[u]);
+  const text = `${subName(A)} ${amt(gA)} と、${subName(B)} ${amt(gB)} を混ぜて、完全に反応させた。`;
+  const ask1 = "反応後に余るのは、どちらか。";
+  const Y = r.yi >= 0 ? sp[r.yi] : null;
+  const askU = { n: "物質量は何 mol か。", m: "質量は何 g か。", V: "体積は、標準状態で何 L か。", N: `${Y ? ptcl(Y) : "分子"}の数は何個か。` }[to];
+  const ask2 = type === "prod" ? `このとき生成した${subName(Y)}の${askU}` : type === "left" ? `反応せずに残った${subName(Y)}の${askU}` : "反応後に残っている気体の体積の合計は、標準状態で何 L か。";
+  const ans = type === "gas" ? r.ansN * VM : r.ansN * UF(to, Y);
+  // 解き方
+  const steps = [], L = sp[r.lim], E = sp[r.ex], fL = fmt(L), fE = fmt(E), nLim = [r.nA, r.nB][r.lim], nEx = [r.nA, r.nB][r.ex];
+  if (u !== "n") [[A, gA, r.nA], [B, gB, r.nB]].forEach(([f, g, n]) => {
+    if (u === "m") steps.push(mExpr(f));
+    steps.push(`${fmt(f)} の物質量 = ${g} ${QUNIT[u]} ÷ ${u === "m" ? molarMass(f) + " g/mol" : u === "V" ? "22.4 L/mol" : "6.0×10<sup>23</sup> /mol"} = <b>${fmtSig(n)} mol</b>`);
+  });
+  const need = nLim * p.a[r.ex] / p.a[r.lim];
+  steps.push(`${fL} ${fmtSig(nLim)} mol と過不足なく反応する ${fE} は、係数の比より ${fmtSig(nLim)} mol × ${p.a[r.ex]}/${p.a[r.lim]} = ${fmtSig(need)} mol。${fE} は ${fmtSig(nEx)} mol あるので ${fE} が余り、<b>${fL} がすべて反応する</b>。`);
+  if (type === "prod") {
+    steps.push(`生成する ${fmt(Y)} は、すべて反応する ${fL} を基準に、${fmtSig(nLim)} mol × ${p.a[r.yi]}/${p.a[r.lim]} = <b>${fmtSig(r.ansN)} mol</b>`);
+    if (to !== "n") steps.push(to === "m" ? mExpr(Y) + `。${fmt(Y)} の質量 = ${fmtSig(r.ansN)} mol × ${molarMass(Y)} g/mol = <b>${fmtSig(ans)} g</b>` : to === "V" ? `${fmt(Y)} の体積 = ${fmtSig(r.ansN)} mol × 22.4 L/mol = <b>${fmtSig(ans)} L</b>` : `${fmt(Y)} の${ptcl(Y)}の数 = ${fmtSig(r.ansN)} mol × 6.0×10<sup>23</sup> /mol = <b>${sciHtml(ans)} 個</b>`);
+  } else if (type === "left") {
+    steps.push(`残る ${fE} = はじめの ${fmtSig(nEx)} mol − 反応した ${fmtSig(need)} mol = <b>${fmtSig(r.ansN)} mol</b>`);
+    if (to !== "n") steps.push(to === "m" ? mExpr(E) + `。${fE} の質量 = ${fmtSig(r.ansN)} mol × ${molarMass(E)} g/mol = <b>${fmtSig(ans)} g</b>` : to === "V" ? `${fE} の体積 = ${fmtSig(r.ansN)} mol × 22.4 L/mol = <b>${fmtSig(ans)} L</b>` : `${fE} の${ptcl(E)}の数 = ${fmtSig(r.ansN)} mol × 6.0×10<sup>23</sup> /mol = <b>${sciHtml(ans)} 個</b>`);
+  } else {
+    const gases = sp.map((f, j) => ({ f, j })).filter(x => canV(x.f) && (x.j >= 2 || x.j === r.ex));
+    const nots = sp.filter((f, j) => j >= 2 && !canV(f));
+    const ns = gases.map(x => fmtSig(x.j < 2 ? r.rem : r.ext * p.a[x.j])), nt = nots.length ? `（${nots.map(fmt).join("・")} は標準状態で気体ではない）` : "";
+    steps.push(gases.length > 1 ? `反応後に残る気体は ${gases.map(x => fmt(x.f)).join(" と ")}${nt}。物質量の合計 = ${ns.join(" + ")} = <b>${fmtSig(r.ansN)} mol</b>`
+      : `反応後に残る気体は ${fmt(gases[0].f)} だけ${nt}。その物質量は <b>${fmtSig(r.ansN)} mol</b>`);
+    steps.push(`体積 = ${fmtSig(r.ansN)} mol × 22.4 L/mol = <b>${fmtSig(ans)} L</b>`);
+  }
+  // 反応前・変化量・反応後の表（mol）
+  const before = sp.map((f, j) => j === 0 ? r.nA : j === 1 ? r.nB : 0), chg = sp.map((f, j) => (j < 2 ? -1 : 1) * r.ext * p.a[j]);
+  const cell = x => x === 0 ? "0" : fmtSig(Math.abs(x));
+  const table = `<div class="xs-tbl"><table><thead><tr><th>（mol）</th>${sp.map(f => `<th>${fmt(f)}</th>`).join("")}</tr></thead><tbody>
+    <tr><th>反応前</th>${before.map(x => `<td>${cell(x)}</td>`).join("")}</tr>
+    <tr><th>変化量</th>${chg.map(x => `<td>${x < 0 ? "−" : "+"}${cell(x)}</td>`).join("")}</tr>
+    <tr><th>反応後</th>${before.map((x, j) => `<td>${cell(Math.max(0, x + chg[j]))}</td>`).join("")}</tr></tbody></table></div>`;
+  const els = [...new Set([...(u === "m" ? [A, B] : []), ...(to === "m" && Y ? [Y] : [])].flatMap(f => Object.keys(parseFormula(f))))];
+  const aw = els.length ? `原子量：${els.map(e => `${e} = ${awText(e)}`).join("、")}` : "";
+  return { xs: true, type, u, to, xi: r.lim, yi: r.yi, lim: r.lim, ex: r.ex, nA: r.nA, nB: r.nB, ext: r.ext, rem: r.rem, ansN: r.ansN,
+    MY: Y ? molarMass(Y) : 0, text, ask1, ask2, ans, steps, table, aw, stage: 1, ansHtml: `${qtyHtml(to, ans)} ${QUNIT[to]}`, aX: p.a[r.lim], aY: r.yi >= 0 ? p.a[r.yi] : 1 };
+}
+// ① 足りなくなる物質を選ぶ
+function xsPick(i) {
+  const q = S.q, p = cur(), now = performance.now();
+  if (!q || !q.xs || q.stage !== 1 || qDone()) return;
+  if (i === q.ex) {   // 余るほうを選べたら正解
+    q.stage = 2; q.picked = i;
+    setMsg("ok", `正解！ ${fmt(p.L[i])} が余る（${fmt(p.L[1 - i])} がすべて反応する）。つぎは量を計算しよう。`);
+    say(Math.random() < .5 ? "doc" : "app", pickLine("xsPickOk", ["うむ、そのとおりじゃ。計算は、余らないほう（すべて反応するほう）を基準にするのじゃぞ。", "正解じゃ。つぎは、すべて反応する物質の量から計算するのじゃ。", "こっちが余るんですね！ じゃあ、もう一方を基準に計算します！", "よし、余るほうがわかりました！"]));
+    renderQty();
+    if (kb) { $("qCheckBtn").focus({ preventScroll: true }); reveal($("qCheckBtn")); }
+    return;
+  }
+  S.miss++; S.life--; renderLife(true);
+  scene.fx = { ok: false, bad: [], stage: null, t0: now, until: now + 1800 }; scene.lamp = "ng";
+  setTimeout(() => { if (scene.lamp === "ng") scene.lamp = "off"; }, 1400);
+  const A = fmt(p.L[0]), B = fmt(p.L[1]), raw = q.nA < q.nB ? 1 : 0;   // 量をそのままくらべたときに「多い」ほう
+  let line = (q.u !== "n" ? "まず両方を物質量に直してから、くらべるのじゃ。" : "") + (i === raw && raw !== q.ex
+    ? "量をそのままくらべてはいかん。係数の比で、必要な量を考えるのじゃ。"
+    : `${A} と過不足なく反応する ${B} の量を、係数の比 ${p.a[0]} : ${p.a[1]} で求めて、くらべてみるのじゃ。`);
+  setMsg("ng", `失敗：${fmt(p.L[i])} はすべて反応するほう（ヒント：係数の比で必要な量をくらべる）`);
+  if (S.life <= 0) { S.res[S.idx] = { failed: true }; line += pickLine("dead", [" …ライフが尽きてしもうたのう。", " …むう、今日の実験はここまでのようじゃ。"]); }
+  else if (S.miss >= 3) { S.shown = true; S.res[S.idx] = { shown: true, auto: true }; line += pickLine("auto3q", [" …3回まちがえたから、答えを見せるぞ。よく見ておくのじゃ。", " ここまでじゃ。答えを見て、どこがちがったか確かめるのじゃ。"]); }
+  say("doc", line);
+  renderQty();
+  if (S.res[S.idx] && S.res[S.idx].auto) $("msg").insertAdjacentHTML("beforeend", '<span class="fu-note">→ 3回まちがえたので、解答を表示しました（★なし）</span>');
+  if ((S.life <= 0 || S.shown) && kb) $("nextBtn").focus();
+}
+// ② 計算のまちがいの診断（過不足）
+function diagnoseXs(v, q, p) {
+  const sp = [...p.L, ...p.R], near = (a, b) => Math.abs(a - b) / Math.abs(b) <= 0.02;
+  const Y = q.yi >= 0 ? sp[q.yi] : null, fL = fmt(sp[q.lim]), fE = fmt(sp[q.ex]);
+  const bases = [{ n: q.ansN, e: [] }];
+  const extMax = Math.max(q.nA / p.a[0], q.nB / p.a[1]);
+  if (q.type === "prod") bases.push({ n: extMax * p.a[q.yi], e: ["basis"] });
+  if (q.type === "left") { bases.push({ n: q.ext * p.a[q.ex], e: ["reacted"] }); bases.push({ n: [q.nA, q.nB][q.ex], e: ["initial"] }); }
+  if (q.type === "gas") {
+    const liq = sp.reduce((t, f, j) => t + (j >= 2 && !canV(f) ? q.ext * p.a[j] : 0), 0);
+    if (liq) bases.push({ n: q.ansN + liq, e: ["liquid"] });
+    if (canV(sp[q.ex])) bases.push({ n: q.ansN - q.rem, e: ["noLeft"] });
+  }
+  const fac = u => q.type === "gas" ? (u === "V" ? VM : 1) : UF(u, Y || sp[q.ex]);
+  const ends = [{ f: fac(q.to), e: [] }];
+  (q.type === "gas" ? ["n"] : ["n", q.u, "m", "V", "N"]).filter((u, i, a) => u !== q.to && a.indexOf(u) === i && (q.type === "gas" || okU(u, Y || sp[q.ex]))).forEach(u => ends.push({ f: fac(u), e: ["unit:" + u] }));
+  let best = null;
+  bases.forEach(b => ends.forEach(en => {
+    const errs = [...b.e, ...en.e]; if (!errs.length || b.n <= 0) return;
+    const val = b.n * en.f; if (near(val, q.ans)) return;
+    if (near(v, val) && (!best || errs.length < best.length)) best = errs;
+  }));
+  if (!best) { const k = Math.round(Math.log10(v / q.ans)); if (k && near(v, q.ans * 10 ** k)) best = ["digits"]; }
+  if (!best) return null;
+  const U = { n: "物質量（mol）", m: "質量（g）", V: "体積（L）", N: "個数" }, HOW = { V: "22.4", N: "6.0×10²³", m: "モル質量" };
+  const MSG = {
+    basis: `余るほうの物質を基準に計算しておらんか？ すべて反応する ${fL} を基準にするのじゃ。`,
+    reacted: `それは反応した ${fE} の量じゃな。残りは、はじめの量から反応した量を引くのじゃ。`,
+    initial: `それははじめの ${fE} の量のままじゃ。反応した分を引くのじゃぞ。`,
+    liquid: `${sp.filter((f, j) => j >= 2 && !canV(f)).map(fmt).join("・")} は標準状態で気体ではないぞ。気体の体積には入れないのじゃ。`,
+    noLeft: `余った ${fE} も気体じゃ。反応後の気体に入れるのを忘れておらんか？`,
+    digits: "数字はよいが、けたがちがうのう。10 の何乗か確かめるのじゃ。",
+  };
+  const unitMsg = u => q.to === "n" ? `求めるのは物質量じゃぞ。${U[u]}ではないぞ。` : u === "n" ? `それは物質量のままじゃな。${HOW[q.to]}をかけて${U[q.to]}に直すのじゃ。` : `求めるのは${U[q.to]}じゃ。${U[u]}ではないぞ。`;
+  const TAG = { basis: "基準にする物質", reacted: "残る量", initial: "残る量", liquid: "気体かどうか", noLeft: "残った気体", digits: "けた" };
+  return { line: best.slice(0, 2).map(e => e.startsWith("unit:") ? unitMsg(e.slice(5)) : MSG[e]).join(""), tag: [...new Set(best.map(e => e.startsWith("unit:") ? "求める量" : TAG[e]))].join("・"), stage: null };
+}
+// ドット絵：2 本の入口 → くらべる装置 → 反応容器 → 求める量、余りのタンク
+function drawXs(c, t) {
+  const q = scene.qty, flowing = q.flowT != null, prog = flowing ? (reduceMotion ? 99 : (t - q.flowT) / 300) : -1;
+  const CA = "#ffd23f", CB = "#f79aa6", CY = "#6fd3ff", box = (x, y, w, h) => { P(c, x - 1, y - 1, w + 2, h + 2, INK); P(c, x, y, w, h, "#24323a"); };
+  const pipe = (x, y, w, h, col, on, f) => { P(c, x, y, w, h, INK); P(c, x + (w > h ? 0 : 1), y + (w > h ? 1 : 0), w > h ? w : 1, w > h ? 1 : h, "#59636e");
+    if (on && f > 0) P(c, x, y + (w > h ? 1 : 0), w > h ? Math.round(w * Math.min(1, f)) : w, w > h ? 1 : Math.round(h * Math.min(1, f)), col); };
+  // 入口（A：黄、B：ピンク）
+  [[30, CA, q.u, 0], [58, CB, q.u, 1]].forEach(([y, col, u, i]) => {
+    box(66, y, 16, 20); P(c, 66, y, 16, 2, col);
+    drawUnitIcon(c, 65, y - 2, u, col, flowing && i === q.lim ? Math.max(0, 1 - prog / 3) : 1, t);
+    if (q.picked === i || (flowing && i === q.lim)) { P(c, 70, y + 22, 8, 1, "#6fe06a"); }
+  });
+  pipe(83, 39, 9, 3, CA, true, flowing ? prog : 0); pipe(83, 67, 9, 3, CB, true, flowing ? prog : 0); pipe(91, 39, 3, 31, CA, true, flowing ? prog - .5 : 0);
+  pipe(94, 53, 6, 3, CA, true, flowing ? prog - 1 : 0);
+  // くらべる装置：必要量の比（n / 係数）を 2 本の棒で
+  box(101, 38, 22, 30);
+  const mx = Math.max(q.rA, q.rB), hA = Math.round(22 * q.rA / mx), hB = Math.round(22 * q.rB / mx);
+  P(c, 105, 64 - hA, 5, hA, CA); P(c, 114, 64 - hB, 5, hB, CB);
+  if (q.picked != null || flowing) { const x = q.lim === 0 ? 105 : 114, yb = 64 - (q.lim === 0 ? hA : hB) - 4; P(c, x + 1, yb, 3, 1, "#6fe06a"); P(c, x + 2, yb + 1, 1, 1, "#6fe06a"); }
+  else if (Math.floor(t / 500) % 2) drawTiny(c, "?", 110, 40);
+  pipe(124, 53, 7, 3, CY, true, flowing ? prog - 1.5 : 0);
+  // 反応容器
+  box(132, 38, 18, 30); drawUnitIcon(c, 132, 42, "n", CY, flowing ? Math.min(1, Math.max(0, prog - 2)) : 0, t);
+  pipe(151, 53, 7, 3, CY, true, flowing ? prog - 2.5 : 0);
+  // 求める量
+  const outCol = q.type === "left" ? (q.ex === 0 ? CA : CB) : CY;
+  box(159, 38, 18, 30); P(c, 159, 38, 18, 2, outCol); drawUnitIcon(c, 159, 42, q.to, outCol, flowing ? Math.min(1, Math.max(0, prog - 3)) : 0, t);
+  // 余りのタンク（余った物質）
+  box(180, 50, 10, 18); const exCol = q.ex === 0 ? CA : CB;
+  if (flowing || q.picked != null) P(c, 181, 67 - 8, 8, 8, exCol);
+  drawTiny(c, "+", 182, 42);
+  const lampCol = scene.lamp === "ok" ? "#6fe06a" : scene.lamp === "ng" ? (Math.floor(t / 150) % 2 ? "#ff4050" : "#8a2030") : "#6a6a72";
+  P(c, 186, 76, 7, 7, INK); P(c, 187, 77, 5, 5, lampCol); P(c, 187, 77, 1, 1, "#ffffff");
 }
 function isCorrect(user, exact) {
   if (user === null || !isFinite(user) || user <= 0) return false;
@@ -1541,7 +1759,7 @@ function renderCalc() {
 const SP_COL = ["#e5384f", "#3f6fd8", "#62c44c", "#f2d43a", "#a466e0", "#e07a2a", "#4ab0a0"];
 function loadQty(idx) {
   const p = cur();
-  S.q = makeQty(p); S.expr = ""; S.cursor = 0; S.flowT = null;
+  S.q = S.xs ? makeXs(p) : makeQty(p); S.expr = ""; S.cursor = 0; S.flowT = null;
   S.taps = 0; S.miss = 0; S.solved = false; S.shown = false; S.recorded = -1;
   $("bmBtn").dataset.bm = p.id; syncBm();
   scene.fx = null; scene.lamp = "off";
@@ -1569,15 +1787,19 @@ function renderQty() {
   $("qname").textContent = p.name;
   $("taps").textContent = S.miss ? `失敗 ${S.miss}` : "";
   $("qEq").innerHTML = eqHtml(p);
-  $("qText").innerHTML = q.text;
+  const st1 = q.xs && q.stage === 1 && !done;
+  $("qText").innerHTML = q.text + (q.xs ? `<br>${st1 ? `<b>① ${q.ask1}</b>` : `② ${q.ask2}`}` : "");
+  $("xsPick").hidden = !st1; $("calcWrap").hidden = st1; $("xsHow").hidden = !q.xs;
+  if (q.xs) [0, 1].forEach(i => { $(i ? "xsB" : "xsA").innerHTML = `<b>${fmt(p.L[i])}</b><small>${SUB[p.L[i]][0]}</small>`; });
   $("qAw").textContent = q.aw || ""; $("qAw").hidden = !q.aw;
-  $("qPlayRow").hidden = done; $("nextRow").hidden = !done; $("askRow").hidden = done;
+  $("qPlayRow").hidden = done || (q.xs && q.stage === 1); $("nextRow").hidden = !done; $("askRow").hidden = done;
   $("nextBtn").textContent = last ? "結果を見る ▶" : "つぎの問題へ ▶";
   $("qExplain").hidden = !done;
-  if (done) $("qExplain").innerHTML = `<p class="qans">答え：${q.ansHtml}</p><p class="qeq px${S.res[S.idx] && S.res[S.idx].auto ? " auto" : ""}">${eqHtml(p)}</p><ol class="steps">${q.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+  if (done) $("qExplain").innerHTML = `<p class="qans">答え：${q.ansHtml}</p><p class="qeq px${S.res[S.idx] && S.res[S.idx].auto ? " auto" : ""}">${eqHtml(p)}</p>${q.xs ? q.table : ""}<ol class="steps">${q.steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
   renderCalc();
   const nL = p.L.length, mk = j => j === q.xi ? "x" : j === q.yi ? "y" : "";
-  scene.qty = { from: q.from, to: q.to, aX: q.aX, aY: q.aY, cx: "#ffd23f", cy: "#6fd3ff", flowT: done ? (S.flowT || performance.now()) : null };
+  scene.qty = q.xs ? { xs: true, u: q.u, to: q.to, type: q.type, lim: q.lim, ex: q.ex, picked: q.stage > 1 ? q.lim : null, rA: q.nA / p.a[0], rB: q.nB / p.a[1], flowT: done ? (S.flowT || performance.now()) : null }
+    : { from: q.from, to: q.to, aX: q.aX, aY: q.aY, cx: "#ffd23f", cy: "#6fd3ff", flowT: done ? (S.flowT || performance.now()) : null };
   if (done && !S.flowT) S.flowT = scene.qty.flowT;
   scene.hidden = false;
   if (done) scene.lamp = S.solved ? "ok" : "off";
@@ -1632,7 +1854,7 @@ function diagnose(v, q, p) {
   return { line: msgs.slice(0, 2).join(""), tag: tags.join("・"), stage: stage != null && stage === 0 && q.from === "n" ? 1 : stage };
 }
 function qtyCheck() {
-  if (qDone()) return;
+  if (qDone() || (S.q.xs && S.q.stage === 1)) return;
   const v = evaluate(S.expr), now = performance.now(), q = S.q, p = cur();
   if (v === null) { setMsg("ng", S.expr ? "式が途中です。最後まで入力してから答え合わせしよう。" : "電卓で式を入力してから答え合わせしよう。"); return; }
   S.taps++;
@@ -1649,14 +1871,18 @@ function qtyCheck() {
     return;
   }
   S.miss++; S.life--; renderLife(true);
-  const dg = diagnose(v, S.q, cur());
+  const dg = S.q.xs ? diagnoseXs(v, S.q, cur()) : diagnose(v, S.q, cur());
   scene.fx = { ok: false, bad: [], stage: dg ? dg.stage : null, t0: now, until: now + 1800 }; scene.lamp = "ng";
   setTimeout(() => { if (scene.lamp === "ng") scene.lamp = "off"; }, 1400);
-  const fx = fmt(p.L.concat(p.R)[q.xi]), fy = fmt(p.L.concat(p.R)[q.yi]);
-  let line = dg ? dg.line : pickLine("qNg", [
+  const fx = fmt(p.L.concat(p.R)[q.xi]), fy = q.yi >= 0 ? fmt(p.L.concat(p.R)[q.yi]) : "気体";
+  let line = dg ? dg.line : q.xs ? pickLine("xsNg", [
+    `答えがちがうぞ。すべて反応する ${fx} を基準に計算するのじゃ。`,
+    "反応前・変化量・反応後を、表にして考えてみるのじゃ。",
+    "計算をたしかめるのじゃ。求める量の単位にも気をつけるのじゃぞ。",
+  ]) : pickLine("qNg", [
     `答えがちがうぞ。${fx} と ${fy} の係数の比は ${q.aX} : ${q.aY} じゃ。`,
     `おしいのう。まずは ${fx} の物質量を求めてみるのじゃ。`,
-    `計算をたしかめるのじゃ。求めるのは「${{ n: "物質量（mol）", V: "体積（L）", N: "個数" }[q.to]}」じゃぞ。`,
+    `計算をたしかめるのじゃ。求めるのは「${{ n: "物質量（mol）", m: "質量（g）", V: "体積（L）", N: "個数" }[q.to]}」じゃぞ。`,
     `むむ、ちがうのう。係数の比をかけるときに、分子と分母が逆になっておらんか？`,
   ]);
   setMsg("ng", `失敗：${fmtAny(v)} ${QUNIT[q.to]} ではない${dg ? `（ヒント：${dg.tag}）` : ""}`);
@@ -1689,6 +1915,20 @@ function qtyAsk() {
 let keyNav = false;   // 矢印で電卓のボタンを選んだとき true（マウスで押したあとの Enter は答え合わせのまま）
 function qtyKey(e) {
   const a = document.activeElement, done = qDone();
+  if (S.q && S.q.xs && S.q.stage === 1 && !done) {   // 過不足の①：「やめる」→ 2 つの物質 →「博士に解答を聞く」
+    const list = [$("quitBtn"), $("xsA"), $("xsB"), $("askBtn")], pos = list.indexOf(a);
+    const go1 = el => { el.focus({ preventScroll: true }); reveal(el); };
+    if (e.key === "Enter") { kb = true; if (pos >= 0) return; e.preventDefault(); return go1($("xsA")); }
+    const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault(); kb = true;
+    if (pos < 0) return go1(d > 0 ? $("xsA") : $("quitBtn"));
+    const t = list[pos + d];
+    if (t) return go1(t);
+    const side = $("gamePanel").closest(".side"), dy = d * Math.round(innerHeight * 0.3), behavior = reduceMotion ? "auto" : "smooth";
+    if (side && side.scrollHeight > side.clientHeight + 1) side.scrollBy({ top: dy, behavior }); else window.scrollBy({ top: dy, behavior });
+    return;
+  }
   const keyEls = [...document.querySelectorAll("#keys .key")], ki = keyEls.indexOf(a);
   const usable = el => el && !el.disabled && !el.closest("[hidden]");
   const go = el => { el.focus({ preventScroll: true }); reveal(el); keyNav = keyEls.includes(el); };
@@ -1741,6 +1981,7 @@ $("expr").addEventListener("click", e => {
   renderCalc();
 });
 $("qCheckBtn").addEventListener("click", qtyCheck);
+$("xsBtns").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) xsPick(+b.dataset.i); });
 function applyModeUI() {
   const q = S.mode === "qty";
   ["coefTop", "coefBottom", "playRow"].forEach(id => $(id).hidden = q || (id === "playRow" && $(id).hidden));
@@ -1824,6 +2065,7 @@ document.addEventListener("keydown", e => {
 });
 
 const pick = (group, fn) => $(group).addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; fn(b.dataset.v); renderMenu(); });
+pick("xsOpts", v => { S.xs = v === "1"; store.set("keisu.xs", S.xs); });
 pick("modeOpts", v => { S.mode = v === "qty" ? "qty" : "coef"; store.set("keisu.mode", S.mode); });
 pick("lvOpts", v => { S.lv = /^\d$/.test(v) ? +v : v; store.set("keisu.lv", S.lv); });
 pick("cntOpts", v => { S.cnt = v === "all" ? "all" : +v; store.set("keisu.cnt", S.cnt); });
